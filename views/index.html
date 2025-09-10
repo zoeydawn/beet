@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
+    <link rel="stylesheet" href="css/pico.classless.fuchsia.min.css">
+    <title>z-LLM</title>
+  </head>
+  <body>
+    <!-- Header -->
+    <header>
+      <nav>
+		<ul>
+    			<li><strong>z-LLM</strong></li>
+		</ul>
+		<ul>
+			<li><a href="#">About</a></li>
+			<!-- <li><a href="#">Services</a></li> -->
+    			<li><a href="#">Login</a></li>
+  		</ul>
+	</nav>
+    </header>
+    <!-- ./ Header -->
+
+    <!-- Main -->
+    <main>
+      <section id="ask-form">
+        
+	<!-- initial question form -->
+	<form>
+          <fieldset role="group">
+            <input
+	    	name="initial-question" 
+		type="text" 
+		placeholder="Ask me anything" 
+		aria-label="ask me anything" 
+		required
+	    >
+            <input 
+	    	type="submit" 
+		value="Ask"
+	    >
+          </fieldset>
+
+	  <fieldset role="group">
+	    <label for="llama3-2">
+              <input type="radio" id="llama3-2" name="model" value="llama3-2" checked>
+              Llama 3.2
+            </label>
+            <label for="gemma3">
+              <input type="radio" id="gemma3" name="model" value="gemma3">
+              Gemma 3
+            </label>
+	    <label for="deepseek-r1">
+              <input type="radio" id="deepseek-r1" name="model" value="deepseek-r1">
+              DeepSeek-R1
+            </label>
+	  </fieldset>
+        </form>
+	<!-- ./ initial question form -->
+      </section>
+    </main>
+    <!-- ./ Main -->
+
+  </body>
+</html>
