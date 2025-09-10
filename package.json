@@ -5,7 +5,7 @@
   "license": "ISC",
   "author": "",
   "type": "commonjs",
-  "main": "index.ts",
+  "main": "src/server.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -19,5 +19,10 @@
   "prettier": {
     "semi": false,
     "singleQuote": true
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.2"
   }
 }
