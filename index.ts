@@ -16,7 +16,7 @@ app.register(session, {
 app.register(rateLimit, { max: 100, timeWindow: '15 minutes' })
 
 app.get('/', (req, reply) => {
-  reply.view('/templates/home.hbs', { title: 'Hello!' })
+  reply.view('/views/home.hbs', { title: 'Hello!' })
 })
 
 app.listen({ port: 3000 })
