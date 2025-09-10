@@ -21,20 +21,19 @@ app.register(view, {
   // layout: 'layout.hbs', // optional, if you want a base layout
 })
 
+// TODO: configure session
 // app.register(session, {
 //   secret: 'super-secret',
 //   cookie: { secure: false },
 // })
 
+// TODO: configure rate limit
 // app.register(rateLimit, { max: 100, timeWindow: '15 minutes' })
 
 app.get('/', (req, reply) => {
-  // reply.view('/views/home.hbs', { title: 'Hello!!!' })
   console.log('GET / called')
-  reply.view('home', { title: 'Hello!!!' })
+  reply.view('home', { title: 'z-LLM' })
 })
-
-// app.listen({ port: 3000, host: '0.0.0.0' })
 
 const start = async () => {
   console.log('Starting Fastify server...')
