@@ -1,22 +1,47 @@
 import Fastify from 'fastify'
 import view from '@fastify/view'
 import handlebars from 'handlebars'
-import session from '@fastify/session'
-import rateLimit from '@fastify/rate-limit'
+// import session from '@fastify/session'
+// import rateLimit from '@fastify/rate-limit'
 
-const app = Fastify()
+const app = Fastify({ logger: true })
 
-app.register(view, { engine: { handlebars } })
+console.log('in server')
 
-app.register(session, {
-  secret: 'super-secret',
-  cookie: { secure: false },
+// app.register(view, { engine: { handlebars } })
+
+// Register handlebars as the template engine
+app.register(view, {
+  engine: { handlebars },
+  root: './views', // where your .hbs files live
+  // layout: 'layout.hbs', // optional, if you want a base layout
 })
 
-app.register(rateLimit, { max: 100, timeWindow: '15 minutes' })
+// app.register(session, {
+//   secret: 'super-secret',
+//   cookie: { secure: false },
+// })
+
+// app.register(rateLimit, { max: 100, timeWindow: '15 minutes' })
 
 app.get('/', (req, reply) => {
-  reply.view('/views/home.hbs', { title: 'Hello!' })
+  // reply.view('/views/home.hbs', { title: 'Hello!!!' })
+  console.log('GET / called')
+  reply.view('home', { title: 'Hello!!!' })
 })
 
-app.listen({ port: 3000 })
+// app.listen({ port: 3000, host: '0.0.0.0' })
+
+const start = async () => {
+  console.log('Starting Fastify server...')
+
+  try {
+    await app.listen({ port: 3000, host: '0.0.0.0' })
+    console.log('🚀 Server running at http://localhost:3000')
+  } catch (err) {
+    app.log.error(err)
+    process.exit(1)
+  }
+}
+
+start()
