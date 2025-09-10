@@ -13,6 +13,11 @@
     "@fastify/rate-limit": "^10.3.0",
     "@fastify/session": "^11.1.0",
     "@fastify/view": "^11.1.1",
-    "fastify": "^5.6.0"
+    "fastify": "^5.6.0",
+    "handlebars": "^4.7.8"
+  },
+  "prettier": {
+    "semi": false,
+    "singleQuote": true
   }
 }
