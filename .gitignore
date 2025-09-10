@@ -22,6 +22,16 @@ logs/
 *.log
 *.log.*
 
+# Docker
+Dockerfile
+Dockerfile.*        # alternate dockerfiles
+docker-compose.yml
+docker-compose.*.yml
+.dockerignore
+.docker/
+.docker-build/
+.docker-cache/
+
 # OS junk
 .DS_Store
 Thumbs.db
