@@ -3,12 +3,16 @@ import view from '@fastify/view'
 import handlebars from 'handlebars'
 // import session from '@fastify/session'
 // import rateLimit from '@fastify/rate-limit'
+import path from 'path'
+import fastifyStatic from '@fastify/static'
 
 const app = Fastify({ logger: true })
 
-console.log('in server')
-
-// app.register(view, { engine: { handlebars } })
+// Serve static files from the "public" folder at the root URL
+app.register(fastifyStatic, {
+  root: path.join(process.cwd(), 'public'),
+  prefix: '/static/', // all files will be served under /static/*
+})
 
 // Register handlebars as the template engine
 app.register(view, {

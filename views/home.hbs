@@ -1,59 +1,74 @@
 <html lang='en'>
   <head>
-    <meta charset='UTF-8' />
-    <title>{{title}}</title>
-    <link rel='stylesheet' href='/static/styles.css' />
-    <script src='https://unpkg.com/htmx.org@1.9.10'></script>
+    <meta charset='utf-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1' />
+    <meta name='color-scheme' content='light dark' />
+    <link rel='stylesheet' href='static/pico.classless.fuchsia.min.css' />
+    <title>z-LLM</title>
   </head>
   <body>
+    <!-- Header -->
     <header>
-      <h1>{{title}}</h1>
-      {{#if user}}
-        <p>Welcome back, {{user.name}}!</p>
-        <button
-          hx-post='/logout'
-          hx-target='#auth'
-          hx-swap='outerHTML'
-        >Logout</button>
-      {{else}}
-        <div id='auth'>
-          <form hx-post='/login' hx-target='#auth' hx-swap='outerHTML'>
-            <input
-              type='text'
-              name='username'
-              placeholder='Username'
-              required
-            />
-            <input
-              type='password'
-              name='password'
-              placeholder='Password'
-              required
-            />
-            <button type='submit'>Login</button>
-          </form>
-        </div>
-      {{/if}}
+      <nav>
+        <ul>
+          <li><strong>z-LLM</strong></li>
+        </ul>
+        <ul>
+          <li><a href='#'>About</a></li>
+          <!-- <li><a href="#">Services</a></li> -->
+          <li><a href='#'>Login</a></li>
+        </ul>
+      </nav>
     </header>
+    <!-- ./ Header -->
 
+    <!-- Main -->
     <main>
-      <h2>Articles</h2>
-      <div id='articles'>
-        {{#each articles}}
-          <article>
-            <h3>{{this.title}}</h3>
-            <p>{{this.body}}</p>
-          </article>
-        {{/each}}
-      </div>
+      <section id='ask-form'>
 
-      <button hx-get='/articles/more' hx-target='#articles' hx-swap='beforeend'>
-        Load More
-      </button>
+        <!-- initial question form -->
+        <form>
+          <fieldset role='group'>
+            <input
+              name='initial-question'
+              type='text'
+              placeholder='Ask me anything'
+              aria-label='ask me anything'
+              required
+            />
+            <input type='submit' value='Ask' />
+          </fieldset>
+
+          <fieldset role='group'>
+            <label for='llama3-2'>
+              <input
+                type='radio'
+                id='llama3-2'
+                name='model'
+                value='llama3-2'
+                checked
+              />
+              Llama 3.2
+            </label>
+            <label for='gemma3'>
+              <input type='radio' id='gemma3' name='model' value='gemma3' />
+              Gemma 3
+            </label>
+            <label for='deepseek-r1'>
+              <input
+                type='radio'
+                id='deepseek-r1'
+                name='model'
+                value='deepseek-r1'
+              />
+              DeepSeek-R1
+            </label>
+          </fieldset>
+        </form>
+        <!-- ./ initial question form -->
+      </section>
     </main>
+    <!-- ./ Main -->
 
-    <footer>
-      <p>&copy; {{year}} My Fastify App</p>
-    </footer>
   </body>
 </html>
