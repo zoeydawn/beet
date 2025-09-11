@@ -1,15 +1,18 @@
 <section id='chat' class='container'>
   <div id='chat-messages' class='chat-container'>
-    <div class='message sent'>
-      {{question}}
-    </div>
-
-    <div class='message received'>
-      {{answer}}
-    </div>
+	  {{> chat-bubbles}}
   </div>
 
-  <form>
+  <p id='chat-loading-spinner' class='htmx-indicator'>
+    <progress></progress>
+    <em>Thinking...</em>
+  </p>
+  <form
+    hx-post='/new-ask'
+    hx-target='#chat-messages'
+    hx-swap='beforeend'
+    hx-indicator='#chat-loading-spinner'
+  >
     <fieldset role='group'>
       <input
         name='chat-question'

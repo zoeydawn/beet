@@ -73,9 +73,22 @@ app.post('/initial-ask', (req, reply) => {
   // just to simulate a delay
   setTimeout(() => {
     reply.view('partials/chat.hbs', responseData)
-  }, 5000)
+  }, 1000)
 
   // return reply.view('partials/chat.hbs', responseData)
+})
+
+app.post('/new-ask', (req, reply) => {
+  const { 'chat-question': question } = req.body as {
+    'chat-question': string
+  }
+
+  setTimeout(() => {
+    reply.view('partials/chat-bubbles.hbs', {
+      question: question,
+      answer: 'This is a simulated answer for the question',
+    })
+  }, 2000)
 })
 
 app.get('/new-chat', (req, reply) => {
