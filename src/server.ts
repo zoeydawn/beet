@@ -4,6 +4,7 @@ import handlebars from 'handlebars'
 // import session from '@fastify/session'
 // import rateLimit from '@fastify/rate-limit'
 import path from 'path'
+import fs from 'fs'
 import fastifyStatic from '@fastify/static'
 
 const app = Fastify({ logger: true })
@@ -17,8 +18,19 @@ app.register(fastifyStatic, {
 // Register handlebars as the template engine
 app.register(view, {
   engine: { handlebars },
-  root: './views', // where your .hbs files live
-  // layout: 'layout.hbs', // optional, if you want a base layout
+  root: path.join(process.cwd(), 'views'),
+  layout: 'layout.hbs', // Set the default layout file
+})
+
+// --- Register partials manually ---
+const partialsDir = path.join(process.cwd(), 'views/partials')
+fs.readdirSync(partialsDir).forEach((file) => {
+  const matches = /^([^.]+).hbs$/.exec(file)
+  if (!matches) return
+
+  const name = matches[1] // partial name = filename (without .hbs)
+  const template = fs.readFileSync(path.join(partialsDir, file), 'utf8')
+  handlebars.registerPartial(name, template)
 })
 
 // TODO: configure session

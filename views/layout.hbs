@@ -1,0 +1,19 @@
+<html lang='en'>
+  <head>
+    <meta charset='utf-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1' />
+    <!-- <meta name='color-scheme' content='light dark' /> -->
+    <link rel='stylesheet' href='static/pico.fuchsia.min.css' />
+    <title>{{title}}</title>
+  </head>
+  <body>
+    {{! Render the header partial }}
+    {{> header}}
+
+    {{! Page-specific content from other views (like home.hbs) goes here }}
+    {{{body}}}
+
+    {{! Render the footer partial }}
+    {{> footer}}
+  </body>
+</html>
