@@ -74,6 +74,10 @@ app.post('/initial-ask', (req, reply) => {
   return reply.view('partials/chat.hbs', responseData)
 })
 
+app.get('/new-chat', (req, reply) => {
+  reply.view('partials/ask-form.hbs')
+})
+
 const start = async () => {
   console.log('Starting Fastify server...')
 
