@@ -1,0 +1,63 @@
+.chat-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  overflow-y: auto;
+  gap: 10px; /* Adds space between messages */
+}
+
+.message {
+  max-width: 75%;
+  padding: 12px 18px;
+  border-radius: 25px; /* General roundedness */
+  position: relative;
+  word-wrap: break-word;
+}
+
+.message p {
+  margin: 0;
+}
+
+/* -- Sent Message (Right) -- */
+.sent {
+  align-self: flex-end;
+  background-color: var(--pico-contrast-background);
+  color: var(--pico-contrast-inverse) !important;
+  border-bottom-right-radius: 5px;
+}
+
+/* Create the pointy tail for sent messages */
+.sent::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  right: -8px;
+  width: 0;
+  height: 0;
+  border: 10px solid transparent;
+  border-left-color: var(--pico-contrast-background);
+  border-bottom-color: var(--pico-contrast-background);
+}
+
+/* -- Received Message (Left) -- */
+.received {
+  background-color: var(--pico-primary-background);
+  color: var(--pico-primary-inverse) !important;
+  align-self: flex-start;
+  /* Flatten the corner where the tail is */
+  border-bottom-left-radius: 5px;
+}
+
+/* Create the pointy tail for received messages */
+.received::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: -8px;
+  width: 0;
+  height: 0;
+  border: 10px solid transparent;
+  border-right-color: var(--pico-primary-background);
+  border-bottom-color: var(--pico-primary-background);
+}

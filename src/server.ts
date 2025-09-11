@@ -68,7 +68,7 @@ app.post('/initial-ask', (req, reply) => {
     question: question,
     model: model,
     answer: simulatedAnswer,
-    layout: false,
+    // layout: false,
   }
 
   return reply.view('partials/chat.hbs', responseData)
