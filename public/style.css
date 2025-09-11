@@ -61,3 +61,25 @@
   border-right-color: var(--pico-primary-background);
   border-bottom-color: var(--pico-primary-background);
 }
+
+/* .container { */
+/*   max-width: 950px; */
+/* } */
+
+@media (min-width: 1024px) {
+  .container {
+    max-width: 950px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .container {
+    max-width: 950px;
+  }
+}
+
+@media (min-width: 1536px) {
+  .container {
+    max-width: 950px;
+  }
+}
