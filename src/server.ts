@@ -6,8 +6,12 @@ import handlebars from 'handlebars'
 import path from 'path'
 import fs from 'fs'
 import fastifyStatic from '@fastify/static'
+import formBody from '@fastify/formbody'
 
 const app = Fastify({ logger: true })
+
+// so that we can read request bodies
+app.register(formBody)
 
 // Serve static files from the "public" folder at the root URL
 app.register(fastifyStatic, {
@@ -19,7 +23,6 @@ app.register(fastifyStatic, {
 app.register(view, {
   engine: { handlebars },
   root: path.join(process.cwd(), 'views'),
-  layout: 'layout.hbs', // Set the default layout file
 })
 
 // --- Register partials manually ---
@@ -45,6 +48,30 @@ fs.readdirSync(partialsDir).forEach((file) => {
 app.get('/', (req, reply) => {
   console.log('GET / called')
   reply.view('home', { title: 'z-LLM' })
+})
+
+app.post('/initial-ask', (req, reply) => {
+  // Fastify automatically parses the form data into req.body
+  const { 'initial-question': question, model } = req.body as {
+    'initial-question': string
+    model: string
+  }
+
+  // Log the received data to the console for debugging
+  console.log('Received question:', question)
+  console.log('Selected model:', model)
+
+  // simulated response for now
+  const simulatedAnswer = `This is a simulated answer for the question "${question}" using the ${model} model. The current time is ${new Date().toLocaleTimeString()}.`
+
+  const responseData = {
+    question: question,
+    model: model,
+    answer: simulatedAnswer,
+    layout: false,
+  }
+
+  return reply.view('partials/chat.hbs', responseData)
 })
 
 const start = async () => {

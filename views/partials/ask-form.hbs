@@ -1,5 +1,5 @@
 <section id='ask-form' class='container'>
-  <form>
+  <form hx-post='/initial-ask' hx-target='#ask-form' hx-swap='outerHTML'>
     <fieldset role='group'>
       <input
         name='initial-question'
