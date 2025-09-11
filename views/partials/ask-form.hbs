@@ -1,5 +1,15 @@
 <section id='ask-form' class='container'>
-  <form hx-post='/initial-ask' hx-target='#ask-form' hx-swap='outerHTML'>
+  <p id='loading-spinner' class='htmx-indicator'>
+    <progress></progress>
+    <em>Thinking...</em>
+  </p>
+
+  <form
+    hx-post='/initial-ask'
+    hx-target='#ask-form'
+    hx-swap='outerHTML'
+    hx-indicator='#loading-spinner'
+  >
     <fieldset role='group'>
       <input
         name='initial-question'
@@ -31,5 +41,6 @@
         DeepSeek-R1
       </label>
     </fieldset>
+
   </form>
 </section>

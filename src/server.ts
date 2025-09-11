@@ -68,10 +68,14 @@ app.post('/initial-ask', (req, reply) => {
     question: question,
     model: model,
     answer: simulatedAnswer,
-    // layout: false,
   }
 
-  return reply.view('partials/chat.hbs', responseData)
+  // just to simulate a delay
+  setTimeout(() => {
+    reply.view('partials/chat.hbs', responseData)
+  }, 5000)
+
+  // return reply.view('partials/chat.hbs', responseData)
 })
 
 app.get('/new-chat', (req, reply) => {
