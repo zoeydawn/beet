@@ -7,6 +7,11 @@
   gap: 10px; /* Adds space between messages */
 }
 
+.assistant-message {
+  margin: 20px 0 0;
+  white-space: pre-wrap;
+}
+
 .message {
   max-width: 75%;
   padding: 12px 18px;
@@ -22,8 +27,8 @@
 /* -- Sent Message (Right) -- */
 .sent {
   align-self: flex-end;
-  background-color: var(--pico-contrast-background);
-  color: var(--pico-contrast-inverse) !important;
+  background-color: var(--pico-primary-background);
+  color: var(--pico-primary-inverse) !important;
   border-bottom-right-radius: 5px;
 }
 
@@ -36,14 +41,14 @@
   width: 0;
   height: 0;
   border: 10px solid transparent;
-  border-left-color: var(--pico-contrast-background);
-  border-bottom-color: var(--pico-contrast-background);
+  border-left-color: var(--pico-primary-background);
+  border-bottom-color: var(--pico-primary-background);
 }
 
 /* -- Received Message (Left) -- */
 .received {
-  background-color: var(--pico-primary-background);
-  color: var(--pico-primary-inverse) !important;
+  background-color: var(--pico-contrast-background);
+  color: var(--pico-contrast-inverse) !important;
   align-self: flex-start;
   /* Flatten the corner where the tail is */
   border-bottom-left-radius: 5px;
@@ -58,8 +63,8 @@
   width: 0;
   height: 0;
   border: 10px solid transparent;
-  border-right-color: var(--pico-primary-background);
-  border-bottom-color: var(--pico-primary-background);
+  border-right-color: var(--pico-contrast-background);
+  border-bottom-color: var(--pico-contrast-background);
 }
 
 /* .container { */

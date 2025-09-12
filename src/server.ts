@@ -127,7 +127,7 @@ app.get('/stream/:id/:model/:prompt', async (req, reply) => {
           reply.raw.write(`data: ${json.response}\n\n`)
         }
         if (json.done) {
-          reply.raw.write('event: end\ndata: done\n\n')
+          // reply.raw.write('event: end\ndata: done\n\n')
           // close event tells to FE to spot listening
           reply.raw.write('event: close\ndata: done\n\n')
           reply.raw.end()
