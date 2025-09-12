@@ -124,7 +124,9 @@ app.get('/stream/:id/:model/:prompt', async (req, reply) => {
       try {
         const json = JSON.parse(line)
         if (json.response) {
-          reply.raw.write(`data: ${json.response}\n\n`)
+          // format so that new lines can be render on the FE
+          const formattedResponse = json.response.replace(/\n/g, '<br>')
+          reply.raw.write(`data: ${formattedResponse}\n\n`)
         }
         if (json.done) {
           // reply.raw.write('event: end\ndata: done\n\n')
