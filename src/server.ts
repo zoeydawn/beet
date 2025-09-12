@@ -8,7 +8,7 @@ import fs from 'fs'
 import fastifyStatic from '@fastify/static'
 import formBody from '@fastify/formbody'
 
-const ollamaUrl = 'http://localhost:11434/api/generate'
+const ollamaUrl = 'http://localhost:11434'
 
 const app = Fastify({ logger: true })
 
@@ -60,6 +60,7 @@ app.post('/initial-ask', async (req, reply) => {
 
   const streamId = crypto.randomUUID() // unique id for this chat message
 
+  // TODO:
   // store this question + model + streamId somewhere
   // so your /stream/:id route knows what to stream
 
@@ -96,7 +97,7 @@ app.get('/stream/:id/:model/:prompt', async (req, reply) => {
     Connection: 'keep-alive',
   })
 
-  const response = await fetch(ollamaUrl, {
+  const response = await fetch(`${ollamaUrl}/api/generate`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
