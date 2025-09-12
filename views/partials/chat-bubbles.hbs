@@ -2,6 +2,19 @@
   {{question}}
 </div>
 
-<div class='message received'>
-  {{answer}}
-</div>
+<!-- <div -->
+<!--   hx-ext='sse' -->
+<!--   sse-connect='/stream/{{id}}/{{model}}/{{prompt}}' -->
+<!--   class='message received' -->
+<!-- > -->
+<!-- {{answer}} -->
+<!-- </div> -->
+
+<div
+  hx-ext='sse'
+  sse-connect='/stream/{{id}}/{{model}}/{{question}}'
+  sse-swap='message'
+  hx-swap='beforeend'
+  sse-close='close'
+  class='message received'
+></div>

@@ -8,6 +8,8 @@ import fs from 'fs'
 import fastifyStatic from '@fastify/static'
 import formBody from '@fastify/formbody'
 
+const ollamaUrl = 'http://localhost:11434/api/generate'
+
 const app = Fastify({ logger: true })
 
 // so that we can read request bodies
@@ -50,32 +52,22 @@ app.get('/', (req, reply) => {
   reply.view('home', { title: 'z-LLM' })
 })
 
-app.post('/initial-ask', (req, reply) => {
-  // Fastify automatically parses the form data into req.body
+app.post('/initial-ask', async (req, reply) => {
   const { 'initial-question': question, model } = req.body as {
     'initial-question': string
     model: string
   }
 
-  // Log the received data to the console for debugging
-  console.log('Received question:', question)
-  console.log('Selected model:', model)
+  const streamId = crypto.randomUUID() // unique id for this chat message
 
-  // simulated response for now
-  const simulatedAnswer = `This is a simulated answer for the question "${question}" using the ${model} model. The current time is ${new Date().toLocaleTimeString()}.`
+  // store this question + model + streamId somewhere
+  // so your /stream/:id route knows what to stream
 
-  const responseData = {
-    question: question,
-    model: model,
-    answer: simulatedAnswer,
-  }
-
-  // just to simulate a delay
-  setTimeout(() => {
-    reply.view('partials/chat.hbs', responseData)
-  }, 1000)
-
-  // return reply.view('partials/chat.hbs', responseData)
+  return reply.view('partials/chat.hbs', {
+    id: streamId,
+    model,
+    question,
+  })
 })
 
 app.post('/new-ask', (req, reply) => {
@@ -89,6 +81,61 @@ app.post('/new-ask', (req, reply) => {
       answer: 'This is a simulated answer for the question',
     })
   }, 2000)
+})
+
+app.get('/stream/:id/:model/:prompt', async (req, reply) => {
+  const { id, model, prompt } = req.params as {
+    id: string
+    model: string
+    prompt: string
+  }
+
+  reply.raw.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    Connection: 'keep-alive',
+  })
+
+  const response = await fetch(ollamaUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ model, prompt }),
+  })
+
+  if (!response.body) {
+    reply.raw.end()
+    return
+  }
+
+  const reader = response.body.getReader()
+  const decoder = new TextDecoder()
+
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+
+    const chunk = decoder.decode(value, { stream: true })
+    const lines = chunk.split('\n').filter(Boolean)
+
+    for (const line of lines) {
+      try {
+        const json = JSON.parse(line)
+        if (json.response) {
+          reply.raw.write(`data: ${json.response}\n\n`)
+        }
+        if (json.done) {
+          reply.raw.write('event: end\ndata: done\n\n')
+          // close event tells to FE to spot listening
+          reply.raw.write('event: close\ndata: done\n\n')
+          reply.raw.end()
+        }
+      } catch {
+        // skip malformed JSON
+      }
+    }
+  }
 })
 
 app.get('/new-chat', (req, reply) => {
