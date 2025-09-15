@@ -1,4 +1,4 @@
-import { FastifyInstance } from 'fastify'
+import type { FastifyInstance } from 'fastify'
 import { createClient } from 'redis'
 import fp from 'fastify-plugin'
 
@@ -9,7 +9,7 @@ export type RedisClient = ReturnType<typeof createClient>
 async function redisPlugin(fastify: FastifyInstance) {
   const client = createClient({
     // TODO: move redis url to env
-    url: 'redis-15288.c114.us-east-1-4.ec2.redns.redis-cloud.com:15288',
+    url: 'redis://redis-15288.c114.us-east-1-4.ec2.redns.redis-cloud.com:15288',
   })
 
   client.on('error', (err) => fastify.log.error('Redis Client Error', err))

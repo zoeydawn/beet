@@ -8,10 +8,14 @@ import fs from 'fs'
 import fastifyStatic from '@fastify/static'
 import formBody from '@fastify/formbody'
 
+import redisPlugin from './plugins/redis.ts'
+
 const ollamaUrl = 'http://localhost:11434'
 
 const app = Fastify({ logger: true })
 
+// --- Register Plugins ---
+app.register(redisPlugin)
 // so that we can read request bodies
 app.register(formBody)
 
