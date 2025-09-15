@@ -7,6 +7,8 @@ import path from 'path'
 import fs from 'fs'
 import fastifyStatic from '@fastify/static'
 import formBody from '@fastify/formbody'
+import dotenv from 'dotenv'
+dotenv.config()
 
 import redisPlugin from './plugins/redis.ts'
 
@@ -64,9 +66,22 @@ app.post('/initial-ask', async (req, reply) => {
 
   const streamId = crypto.randomUUID() // unique id for this chat message
 
-  // TODO:
-  // store this question + model + streamId somewhere
-  // so your /stream/:id route knows what to stream
+  try {
+    // We'll create a unique key for this chat session
+    const redisKey = `chat:${streamId}`
+
+    // Use HSET to store the initial chat data in a Redis Hash
+    await app.redis.hSet(redisKey, {
+      initialPrompt: question,
+      model,
+      createdAt: new Date().toISOString(),
+    })
+
+    app.log.info(`Saved new chat session to Redis with key: ${redisKey}`)
+  } catch (err) {
+    app.log.error('Failed to save initial chat to Redis', err)
+    // You could return an error here if saving is critical
+  }
 
   return reply.view('partials/chat.hbs', {
     id: streamId,

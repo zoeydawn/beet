@@ -7,9 +7,17 @@ export type RedisClient = ReturnType<typeof createClient>
 
 // Define the Fastify plugin
 async function redisPlugin(fastify: FastifyInstance) {
+  const redisUrl = process.env.REDIS_URL
+
+  if (!redisUrl) {
+    fastify.log.error('Redis URL is not defined. Please check your .env file.')
+    // Stop the server from starting if Redis is essential
+    process.exit(1)
+  }
+
   const client = createClient({
     // TODO: move redis url to env
-    url: 'redis://redis-15288.c114.us-east-1-4.ec2.redns.redis-cloud.com:15288',
+    url: redisUrl,
   })
 
   client.on('error', (err) => fastify.log.error('Redis Client Error', err))
