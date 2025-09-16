@@ -64,23 +64,28 @@ app.post('/initial-ask', async (req, reply) => {
     model: string
   }
 
-  const streamId = crypto.randomUUID() // unique id for this chat message
+  const streamId = crypto.randomUUID()
 
   try {
-    // We'll create a unique key for this chat session
-    const redisKey = `chat:${streamId}`
+    const chatKey = `chat:${streamId}`
+    const messagesKey = `messages:${streamId}`
 
-    // Use HSET to store the initial chat data in a Redis Hash
-    await app.redis.hSet(redisKey, {
-      initialPrompt: question,
-      model,
+    // 1. Store the chat metadata in a Hash
+    await app.redis.hSet(chatKey, {
+      model: model,
       createdAt: new Date().toISOString(),
     })
 
-    app.log.info(`Saved new chat session to Redis with key: ${redisKey}`)
+    // 2. Store the first user message in a List
+    const firstMessage = JSON.stringify({
+      role: 'user',
+      content: question,
+    })
+    await app.redis.rPush(messagesKey, firstMessage)
+
+    app.log.info(`Started new chat: ${chatKey}`)
   } catch (err) {
     app.log.error('Failed to save initial chat to Redis', err)
-    // You could return an error here if saving is critical
   }
 
   return reply.view('partials/chat.hbs', {
