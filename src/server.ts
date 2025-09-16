@@ -115,6 +115,8 @@ app.get('/stream/:id/:model/:prompt', async (req, reply) => {
     prompt: string
   }
 
+  const messagesKey = `messages:${id}`
+
   reply.raw.writeHead(200, {
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache',
@@ -123,9 +125,7 @@ app.get('/stream/:id/:model/:prompt', async (req, reply) => {
 
   const response = await fetch(`${ollamaUrl}/api/generate`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ model, prompt }),
   })
 
@@ -136,6 +136,9 @@ app.get('/stream/:id/:model/:prompt', async (req, reply) => {
 
   const reader = response.body.getReader()
   const decoder = new TextDecoder()
+
+  // ✨ 1. Create a variable to hold the full response
+  let fullResponse = ''
 
   while (true) {
     const { done, value } = await reader.read()
@@ -148,13 +151,26 @@ app.get('/stream/:id/:model/:prompt', async (req, reply) => {
       try {
         const json = JSON.parse(line)
         if (json.response) {
-          // format so that new lines can be render on the FE
           const formattedResponse = json.response.replace(/\n/g, '<br>')
+
+          // ✨ 2. Add each piece of the response to our variable
+          fullResponse += formattedResponse
+
           reply.raw.write(`data: ${formattedResponse}\n\n`)
         }
         if (json.done) {
-          // reply.raw.write('event: end\ndata: done\n\n')
-          // close event tells to FE to spot listening
+          // ✨ 3. When the stream is done, save the full response to Redis
+          try {
+            const assistantMessage = JSON.stringify({
+              role: 'assistant',
+              content: fullResponse,
+            })
+            await app.redis.rPush(messagesKey, assistantMessage)
+            app.log.info(`Saved assistant response to ${messagesKey}`)
+          } catch (err) {
+            app.log.error('Failed to save assistant response to Redis', err)
+          }
+
           reply.raw.write('event: close\ndata: done\n\n')
           reply.raw.end()
         }
