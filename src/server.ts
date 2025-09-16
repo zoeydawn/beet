@@ -108,75 +108,86 @@ app.post('/new-ask', (req, reply) => {
   }, 2000)
 })
 
-app.get('/stream/:id/:model/:prompt', async (req, reply) => {
-  const { id, model, prompt } = req.params as {
+app.get('/stream/:id/:model', async (req, reply) => {
+  const { id, model } = req.params as {
     id: string
     model: string
-    prompt: string
   }
 
   const messagesKey = `messages:${id}`
 
-  reply.raw.writeHead(200, {
-    'Content-Type': 'text/event-stream',
-    'Cache-Control': 'no-cache',
-    Connection: 'keep-alive',
-  })
+  try {
+    const historyStrings = await app.redis.lRange(messagesKey, 0, -1)
+    const history = historyStrings.map((msg) => JSON.parse(msg))
 
-  const response = await fetch(`${ollamaUrl}/api/generate`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model, prompt }),
-  })
+    reply.raw.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      Connection: 'keep-alive',
+    })
 
-  if (!response.body) {
-    reply.raw.end()
-    return
-  }
+    const response = await fetch(`${ollamaUrl}/api/chat`, {
+      // Correctly using /api/chat
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model,
+        messages: history,
+      }),
+    })
 
-  const reader = response.body.getReader()
-  const decoder = new TextDecoder()
+    if (!response.body) {
+      reply.raw.end()
+      return
+    }
 
-  // ✨ 1. Create a variable to hold the full response
-  let fullResponse = ''
+    const reader = response.body.getReader()
+    const decoder = new TextDecoder()
+    let fullResponse = ''
 
-  while (true) {
-    const { done, value } = await reader.read()
-    if (done) break
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) {
+        // Saving logic is the same
+        const assistantMessage = JSON.stringify({
+          role: 'assistant',
+          content: fullResponse,
+        })
+        await app.redis.rPush(messagesKey, assistantMessage)
+        app.log.info(`Saved assistant response to ${messagesKey}`)
+        break
+      }
 
-    const chunk = decoder.decode(value, { stream: true })
-    const lines = chunk.split('\n').filter(Boolean)
+      const chunk = decoder.decode(value, { stream: true })
+      const lines = chunk.split('\n').filter(Boolean)
 
-    for (const line of lines) {
-      try {
-        const json = JSON.parse(line)
-        if (json.response) {
-          const formattedResponse = json.response.replace(/\n/g, '<br>')
+      for (const line of lines) {
+        try {
+          const json = JSON.parse(line)
 
-          // ✨ 2. Add each piece of the response to our variable
-          fullResponse += formattedResponse
+          // ✨ --- THIS IS THE CORRECTED LOGIC --- ✨
+          // We now look for 'json.message.content' instead of 'json.response'
+          if (json.message && json.message.content) {
+            const content = json.message.content
 
-          reply.raw.write(`data: ${formattedResponse}\n\n`)
-        }
-        if (json.done) {
-          // ✨ 3. When the stream is done, save the full response to Redis
-          try {
-            const assistantMessage = JSON.stringify({
-              role: 'assistant',
-              content: fullResponse,
-            })
-            await app.redis.rPush(messagesKey, assistantMessage)
-            app.log.info(`Saved assistant response to ${messagesKey}`)
-          } catch (err) {
-            app.log.error('Failed to save assistant response to Redis', err)
+            const formattedContent = content.replace(/\n/g, '<br>')
+            fullResponse += formattedContent
+            reply.raw.write(`data: ${formattedContent}\n\n`)
           }
 
-          reply.raw.write('event: close\ndata: done\n\n')
-          reply.raw.end()
+          if (json.done) {
+            reply.raw.write('event: close\ndata: done\n\n')
+            reply.raw.end()
+          }
+        } catch {
+          // skip malformed JSON
         }
-      } catch {
-        // skip malformed JSON
       }
+    }
+  } catch (err) {
+    app.log.error('Error in stream route', err)
+    if (!reply.raw.writableEnded) {
+      reply.raw.end()
     }
   }
 })
