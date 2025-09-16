@@ -95,17 +95,33 @@ app.post('/initial-ask', async (req, reply) => {
   })
 })
 
-app.post('/new-ask', (req, reply) => {
-  const { 'chat-question': question } = req.body as {
-    'chat-question': string
-  }
+app.post('/new-ask/:id', async (req, reply) => {
+  const { id } = req.params as { id: string }
+  const { 'chat-question': question } = req.body as { 'chat-question': string }
 
-  setTimeout(() => {
-    reply.view('partials/chat-bubbles.hbs', {
-      question: question,
-      answer: 'This is a simulated answer for the question',
+  const messagesKey = `messages:${id}`
+
+  try {
+    // Save the new user prompt to the Redis list
+    const userMessage = JSON.stringify({
+      role: 'user',
+      content: question,
     })
-  }, 2000)
+    await app.redis.rPush(messagesKey, userMessage)
+    app.log.info(`Saved new prompt to ${messagesKey}`)
+
+    // Get the model from the chat metadata
+    const chatData = await app.redis.hGetAll(`chat:${id}`)
+
+    // Respond with a partial that will trigger the stream
+    return reply.view('partials/chat-bubbles.hbs', {
+      id: id,
+      model: chatData.model,
+      question: question,
+    })
+  } catch (err) {
+    app.log.error('Failed to save new prompt to Redis', err)
+  }
 })
 
 app.get('/stream/:id/:model', async (req, reply) => {
@@ -148,7 +164,6 @@ app.get('/stream/:id/:model', async (req, reply) => {
     while (true) {
       const { done, value } = await reader.read()
       if (done) {
-        // Saving logic is the same
         const assistantMessage = JSON.stringify({
           role: 'assistant',
           content: fullResponse,
@@ -165,8 +180,6 @@ app.get('/stream/:id/:model', async (req, reply) => {
         try {
           const json = JSON.parse(line)
 
-          // ✨ --- THIS IS THE CORRECTED LOGIC --- ✨
-          // We now look for 'json.message.content' instead of 'json.response'
           if (json.message && json.message.content) {
             const content = json.message.content
 
