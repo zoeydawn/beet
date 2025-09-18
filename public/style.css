@@ -88,3 +88,25 @@
     max-width: 950px;
   }
 }
+
+#drawer {
+  position: absolute;
+  top: 0;
+  left: -250px; /* hidden by default */
+  width: 250px;
+  height: 100%;
+  background: var(--pico-background-color);
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+  transition: left 0.3s ease;
+  padding: 1rem;
+}
+
+#drawer.open {
+  left: 0;
+}
+
+#menu-btn {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+}
