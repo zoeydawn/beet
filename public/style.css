@@ -112,3 +112,13 @@
   left: 1rem;
   z-index: 1100; /* ensure button stays above drawer */
 }
+
+.internal-link {
+  cursor: pointer;
+}
+
+.chat-list {
+  display: flex;
+  flex-direction: column;
+  padding-top: 80px;
+}

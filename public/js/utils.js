@@ -16,3 +16,10 @@ document.addEventListener('click', (e) => {
     drawer.classList.remove('open')
   }
 })
+
+// Close drawer when a link inside is clicked
+drawer.querySelectorAll('a').forEach((link) => {
+  link.addEventListener('click', () => {
+    drawer.classList.remove('open')
+  })
+})
