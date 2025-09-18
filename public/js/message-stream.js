@@ -7,7 +7,7 @@ document.body.addEventListener('htmx:sseClose', function (e) {
     const text = el.innerText
 
     // Save to localStorage
-    localStorage.setItem(`chat-${el.id}`, text)
+    localStorage.setItem(`${el.id}`, `${text.slice(0, 15)}...`)
 
     // Render Markdown
     el.innerHTML = marked.parse(text)
