@@ -22,21 +22,5 @@
     {{> footer}}
   </body>
 
-  <script type="module">
-  import { marked } from "https://cdn.jsdelivr.net/npm/marked/lib/marked.esm.js";
-
-document.body.addEventListener("htmx:sseClose", function (e) {
-  if (e.detail.type === "message") {
-    const el = e.target; // the element that was connected
-    const text = el.innerText;
-
-    // Save to localStorage
-    localStorage.setItem(`chat-${el.id}`, text);
-
-    // Render Markdown
-    el.innerHTML = marked.parse(text);
-  }
-});
-
-</script>
+  <script type="module" src="/static/js/message-stream.js"></script>
 </html>
