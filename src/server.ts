@@ -199,9 +199,9 @@ app.get('/stream/:id/:model', async (req, reply) => {
 
           if (json.message && json.message.content) {
             const content = json.message.content
+            fullResponse += content
 
             const formattedContent = content.replace(/\n/g, '<br>')
-            fullResponse += formattedContent
             reply.raw.write(`data: ${formattedContent}\n\n`)
           }
 
