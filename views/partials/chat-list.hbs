@@ -1,0 +1,12 @@
+{{#if chats.length}}
+  {{#each chats}}
+    <li>
+      <a class='internal-link' href='/chat/{{id}}'>
+        {{title}}
+        ({{id}})
+      </a>
+    </li>
+  {{/each}}
+{{else}}
+  <li>No chats yet...</li>
+{{/if}}

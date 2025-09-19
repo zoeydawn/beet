@@ -1,8 +1,13 @@
 <button id='menu-btn'>☰</button>
 
-<nav id='drawer'>
+<nav
+  id='drawer'
+  class='drawer'
+  hx-get='/chat-history'
+  hx-target='.chat-list'
+  hx-trigger='revealed'
+>
   <ul class='chat-list'>
-    <li><a class='internal-link'>Chat 1...</a></li>
-    <li><a class='internal-link'>Chat 2...</a></li>
+    <li>Loading chats...</li>
   </ul>
 </nav>

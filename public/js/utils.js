@@ -4,6 +4,11 @@ const btn = document.getElementById('menu-btn')
 btn.addEventListener('click', (e) => {
   e.stopPropagation() // prevent click bubbling
   drawer.classList.toggle('open')
+
+  if (drawer.classList.contains('open')) {
+    // console.log('open')
+    htmx.trigger(drawer, 'revealed') // load chats when drawer opens
+  }
 })
 
 // Close drawer if click happens outside

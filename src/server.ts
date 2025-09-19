@@ -90,7 +90,13 @@ app.post('/initial-ask', async (req, reply) => {
     })
     await app.redis.rPush(messagesKey, firstMessage)
 
-    app.log.info(`Started new chat: ${chatKey}`)
+    // 3. Associate chat with session
+    const sessionChatsKey = `session:${req.session.sessionId}:chats`
+    await app.redis.rPush(sessionChatsKey, streamId)
+
+    app.log.info(
+      `Started new chat: ${chatKey} (session ${req.session.sessionId})`,
+    )
   } catch (err) {
     app.log.error('Failed to save initial chat to Redis', err)
   }
@@ -214,6 +220,20 @@ app.get('/stream/:id/:model', async (req, reply) => {
 
 app.get('/new-chat', (req, reply) => {
   reply.view('partials/ask-form.hbs')
+})
+
+app.get('/chat-history', async (req, reply) => {
+  const sessionChatsKey = `session:${req.session.sessionId}:chats`
+  const chatIds = await app.redis.lRange(sessionChatsKey, 0, -1)
+
+  const chats = []
+  for (const id of chatIds) {
+    const chatData = await app.redis.hGetAll(`chat:${id}`)
+    chats.push({ id, ...chatData })
+  }
+  console.log('chats', chats)
+
+  return reply.view('partials/chat-list.hbs', { chats })
 })
 
 const start = async () => {
