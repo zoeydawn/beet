@@ -22,6 +22,7 @@ document.addEventListener('click', (e) => {
   }
 })
 
+// close drawer when link is clicked
 drawer.addEventListener('click', (e) => {
   if (
     e.target.tagName === 'A' &&
