@@ -8,6 +8,7 @@ import formBody from '@fastify/formbody'
 import session from '@fastify/session'
 import cookie from '@fastify/cookie'
 // import rateLimit from '@fastify/rate-limit'
+import { marked } from 'marked'
 
 import dotenv from 'dotenv'
 dotenv.config()
@@ -248,7 +249,16 @@ app.get('/chat/:id', async (req, reply) => {
 
   const chatMeta = await app.redis.hGetAll(chatKey)
   const messages = await app.redis.lRange(messagesKey, 0, -1)
-  const parsedMessages = messages.map((m) => JSON.parse(m))
+  const parsedMessages = messages.map((m) => {
+    const msg = JSON.parse(m)
+
+    // format markdown for assistant messages
+    if (msg.role === 'assistant') {
+      msg.content = marked.parse(msg.content)
+    }
+
+    return msg
+  })
 
   return reply.view('partials/existing-chat.hbs', {
     id,
