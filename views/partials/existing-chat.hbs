@@ -1,0 +1,17 @@
+<section id='chat' class='container'>
+  <div id='chat-messages' class='chat-container'>
+    {{#if messages.length}}
+      {{#each messages}}
+        {{#if (eq this.role 'user')}}
+          <div class='message sent'>{{this.content}}</div>
+        {{else if (eq this.role 'assistant')}}
+          <div class='assistant-message'>{{this.content}}</div>
+        {{/if}}
+      {{/each}}
+    {{else}}
+      <div class='message system'>Nothing here</div>
+    {{/if}}
+
+  </div>
+  {{> new-ask-form}}
+</section>

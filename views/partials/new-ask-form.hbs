@@ -1,0 +1,45 @@
+<p id='chat-loading-spinner' class='htmx-indicator'>
+  <progress></progress>
+  <em>Thinking...</em>
+</p>
+
+<form
+  hx-post='/new-ask/{{id}}'
+  hx-target='#chat-messages'
+  hx-swap='beforeend'
+  hx-indicator='#chat-loading-spinner'
+  onhtmx:afterOnLoad='this.reset()'
+>
+  <fieldset role='group'>
+    <input
+      name='chat-question'
+      type='text'
+      placeholder='Ask me anything'
+      aria-label='ask me anything'
+      required
+    />
+    <input type='submit' value='Ask' />
+  </fieldset>
+
+  <fieldset role='group'>
+    <label for='gemma3'>
+      <input type='radio' id='gemma3' name='model' value='gemma3' checked />
+      Gemma 3
+    </label>
+    <label for='llama3-2'>
+      <input type='radio' id='llama3-2' name='model' value='llama3-2' />
+      Llama 3.2
+    </label>
+    <label for='deepseek-r1'>
+      <input type='radio' id='deepseek-r1' name='model' value='deepseek-r1' />
+      DeepSeek-R1
+    </label>
+  </fieldset>
+</form>
+
+<a
+  class='internal-link'
+  hx-get='new-chat'
+  hx-target='#chat'
+  hx-swap='outerHTML'
+>new chat</a>

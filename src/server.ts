@@ -56,6 +56,9 @@ app.register(session, {
   saveUninitialized: true,
 })
 
+// register helpers
+handlebars.registerHelper('eq', (a: any, b: any) => a === b)
+
 // TODO: configure rate limit
 // app.register(rateLimit, { max: 100, timeWindow: '15 minutes' })
 
@@ -235,6 +238,23 @@ app.get('/chat-history', async (req, reply) => {
   console.log('chats', chats)
 
   return reply.view('partials/chat-list.hbs', { chats })
+})
+
+app.get('/chat/:id', async (req, reply) => {
+  const { id } = req.params as { id: string }
+
+  const chatKey = `chat:${id}`
+  const messagesKey = `messages:${id}`
+
+  const chatMeta = await app.redis.hGetAll(chatKey)
+  const messages = await app.redis.lRange(messagesKey, 0, -1)
+  const parsedMessages = messages.map((m) => JSON.parse(m))
+
+  return reply.view('partials/existing-chat.hbs', {
+    id,
+    model: chatMeta.model,
+    messages: parsedMessages,
+  })
 })
 
 const start = async () => {

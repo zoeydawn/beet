@@ -1,7 +1,12 @@
 {{#if chats.length}}
   {{#each chats}}
     <li>
-      <a class='internal-link' href='/chat/{{id}}'>
+      <a
+        class='internal-link'
+        hx-get='/chat/{{id}}'
+        hx-target='#main'
+        hx-swap='innerHTML'
+      >
         {{title}}...
       </a>
     </li>
