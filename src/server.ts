@@ -1,14 +1,18 @@
 import Fastify from 'fastify'
 import view from '@fastify/view'
 import handlebars from 'handlebars'
-// import session from '@fastify/session'
-// import rateLimit from '@fastify/rate-limit'
 import path from 'path'
 import fs from 'fs'
 import fastifyStatic from '@fastify/static'
 import formBody from '@fastify/formbody'
+import session from '@fastify/session'
+import cookie from '@fastify/cookie'
+// import rateLimit from '@fastify/rate-limit'
+
 import dotenv from 'dotenv'
 dotenv.config()
+
+const isProduction = process.env.NODE_ENV === 'production'
 
 import redisPlugin from './plugins/redis.ts'
 
@@ -44,11 +48,13 @@ fs.readdirSync(partialsDir).forEach((file) => {
   handlebars.registerPartial(name, template)
 })
 
-// TODO: configure session
-// app.register(session, {
-//   secret: 'super-secret',
-//   cookie: { secure: false },
-// })
+// Cookie + session
+app.register(cookie)
+app.register(session, {
+  secret: process.env.SESSION_SECRET!,
+  cookie: { secure: isProduction },
+  saveUninitialized: true,
+})
 
 // TODO: configure rate limit
 // app.register(rateLimit, { max: 100, timeWindow: '15 minutes' })
@@ -74,6 +80,7 @@ app.post('/initial-ask', async (req, reply) => {
     await app.redis.hSet(chatKey, {
       model: model,
       createdAt: new Date().toISOString(),
+      sessionId: req.session.sessionId,
     })
 
     // 2. Store the first user message in a List
