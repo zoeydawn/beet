@@ -81,6 +81,7 @@ app.post('/initial-ask', async (req, reply) => {
       model: model,
       createdAt: new Date().toISOString(),
       sessionId: req.session.sessionId,
+      title: question.slice(0, 15),
     })
 
     // 2. Store the first user message in a List
