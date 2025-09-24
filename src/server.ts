@@ -145,7 +145,6 @@ app.post('/new-ask/:id', async (req, reply) => {
 app.get('/stream/:id/:model', async (req, reply) => {
   const { id, model } = req.params as { id: string; model: string }
   const messagesKey = `messages:${id}`
-  const bufferKey = `stream-buffer:${id}`
 
   try {
     // Load chat history to send to Ollama
@@ -175,17 +174,21 @@ app.get('/stream/:id/:model', async (req, reply) => {
     const decoder = new TextDecoder()
     let fullResponse = ''
 
-    // Remove any leftover buffer before starting
-    await app.redis.del(bufferKey)
-
     // Track client disconnect
     let disconnected = false
     req.raw.on('close', async () => {
       disconnected = true
+
+      // Save unfinished response if disconnected
       if (fullResponse.length) {
-        // Save unfinished response for recovery
-        await app.redis.set(bufferKey, fullResponse)
-        app.log.info(`Saved unfinished stream for chat ${id}`)
+        const assistantMessage = JSON.stringify({
+          role: 'assistant',
+          content: fullResponse,
+        })
+        await app.redis.rPush(messagesKey, assistantMessage)
+        req.log.info(
+          `Saved unfinished assistant response for chat ${id} on disconnect`,
+        )
       }
     })
 
@@ -232,7 +235,6 @@ app.get('/stream/:id/:model', async (req, reply) => {
         content: fullResponse,
       })
       await app.redis.rPush(messagesKey, assistantMessage)
-      await app.redis.del(bufferKey)
       app.log.info(`Saved assistant response to ${messagesKey}`)
     }
 
