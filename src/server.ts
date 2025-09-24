@@ -143,31 +143,27 @@ app.post('/new-ask/:id', async (req, reply) => {
 })
 
 app.get('/stream/:id/:model', async (req, reply) => {
-  const { id, model } = req.params as {
-    id: string
-    model: string
-  }
-
+  const { id, model } = req.params as { id: string; model: string }
   const messagesKey = `messages:${id}`
+  const bufferKey = `stream-buffer:${id}`
 
   try {
+    // Load chat history to send to Ollama
     const historyStrings = await app.redis.lRange(messagesKey, 0, -1)
     const history = historyStrings.map((msg) => JSON.parse(msg))
 
+    // Start SSE response
     reply.raw.writeHead(200, {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
       Connection: 'keep-alive',
     })
 
+    // Call Ollama API
     const response = await fetch(`${ollamaUrl}/api/chat`, {
-      // Correctly using /api/chat
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model,
-        messages: history,
-      }),
+      body: JSON.stringify({ model, messages: history }),
     })
 
     if (!response.body) {
@@ -179,17 +175,24 @@ app.get('/stream/:id/:model', async (req, reply) => {
     const decoder = new TextDecoder()
     let fullResponse = ''
 
+    // Remove any leftover buffer before starting
+    await app.redis.del(bufferKey)
+
+    // Track client disconnect
+    let disconnected = false
+    req.raw.on('close', async () => {
+      disconnected = true
+      if (fullResponse.length) {
+        // Save unfinished response for recovery
+        await app.redis.set(bufferKey, fullResponse)
+        app.log.info(`Saved unfinished stream for chat ${id}`)
+      }
+    })
+
+    // Read streaming tokens
     while (true) {
       const { done, value } = await reader.read()
-      if (done) {
-        const assistantMessage = JSON.stringify({
-          role: 'assistant',
-          content: fullResponse,
-        })
-        await app.redis.rPush(messagesKey, assistantMessage)
-        app.log.info(`Saved assistant response to ${messagesKey}`)
-        break
-      }
+      if (done) break
 
       const chunk = decoder.decode(value, { stream: true })
       const lines = chunk.split('\n').filter(Boolean)
@@ -202,24 +205,41 @@ app.get('/stream/:id/:model', async (req, reply) => {
             const content = json.message.content
             fullResponse += content
 
+            // Send to client progressively (HTML line breaks)
             const formattedContent = content.replace(/\n/g, '<br>')
             reply.raw.write(`data: ${formattedContent}\n\n`)
           }
 
           if (json.done) {
             reply.raw.write('event: close\ndata: done\n\n')
-            reply.raw.end()
           }
         } catch {
           // skip malformed JSON
         }
       }
+
+      // Stop streaming if client disconnected
+      if (disconnected) {
+        reply.raw.end()
+        return
+      }
     }
+
+    // Finalize normally: push full response into messages
+    if (!disconnected && fullResponse.length) {
+      const assistantMessage = JSON.stringify({
+        role: 'assistant',
+        content: fullResponse,
+      })
+      await app.redis.rPush(messagesKey, assistantMessage)
+      await app.redis.del(bufferKey)
+      app.log.info(`Saved assistant response to ${messagesKey}`)
+    }
+
+    reply.raw.end()
   } catch (err) {
     app.log.error('Error in stream route', err)
-    if (!reply.raw.writableEnded) {
-      reply.raw.end()
-    }
+    if (!reply.raw.writableEnded) reply.raw.end()
   }
 })
 
