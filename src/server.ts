@@ -162,16 +162,6 @@ app.get('/stream/:id/:model', async (req, reply) => {
       Connection: 'keep-alive',
     })
 
-    // const response = await fetch(`${ollamaUrl}/api/chat`, {
-    //   // Correctly using /api/chat
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify({
-    //     model,
-    //     messages: history,
-    //   }),
-    // })
-    // console.log('messages', messages)
     const response = await fetch(
       'https://router.huggingface.co/v1/chat/completions',
       {
@@ -204,7 +194,10 @@ app.get('/stream/:id/:model', async (req, reply) => {
     try {
       while (true) {
         const { done, value } = await reader.read()
-        if (done) break
+
+        if (done) {
+          break
+        }
 
         const chunk = decoder.decode(value)
         const lines = chunk.split('\n')
@@ -215,6 +208,16 @@ app.get('/stream/:id/:model', async (req, reply) => {
 
             if (data === '[DONE]') {
               console.log('\n✨ Stream complete!')
+
+              // save full response to DB
+              const assistantMessage = JSON.stringify({
+                role: 'assistant',
+                content: fullResponse,
+              })
+
+              await app.redis.rPush(messagesKey, assistantMessage)
+              app.log.info(`Saved assistant response to ${messagesKey}`)
+
               // Ensure the stream is closed properly
               if (!reply.raw.writableEnded) {
                 reply.raw.write('event: close\ndata: done\n\n')
@@ -245,7 +248,6 @@ app.get('/stream/:id/:model', async (req, reply) => {
     } finally {
       reader.releaseLock()
     }
-    // TODO: Save fullResponse to DB
   } catch (err) {
     app.log.error('Error in stream route', err)
     if (!reply.raw.writableEnded) {
