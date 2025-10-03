@@ -220,4 +220,16 @@
   }
 
   /* TODO: handle sidebar style for small screens  */
+  #sidebar {
+    /* display: none; */
+    width: 0;
+  }
+
+  #main {
+    margin-left: 0;
+  }
+
+  #model-select {
+    left: 15px;
+  }
 }
