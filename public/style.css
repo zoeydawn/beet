@@ -164,4 +164,19 @@
 
 #ask-form {
   padding: 150px 0 100px 0;
+  position: relative;
+}
+
+#chat {
+  position: relative;
+}
+
+#model-select {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 220px;
+  font-size: 12px;
+  background-color: #000;
+  color: var(--pico-primary-background);
 }
