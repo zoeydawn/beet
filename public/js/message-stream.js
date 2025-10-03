@@ -20,8 +20,11 @@ document.body.addEventListener('htmx:sseMessage', function (e) {
   // Append new chunk
   buffers[id] += chunk
 
+  // format the buffer so that markdown can be parsed without issues
+  const formattedBuffer = buffers[id].replace(/<br>/g, '\n')
+
   // Render the full buffer as Markdown
-  el.innerHTML = marked.parse(buffers[id])
+  el.innerHTML = marked.parse(formattedBuffer)
 })
 
 document.body.addEventListener('htmx:sseClose', function (e) {
