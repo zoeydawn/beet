@@ -14,6 +14,7 @@ import dotenv from 'dotenv'
 dotenv.config()
 
 const isProduction = process.env.NODE_ENV === 'production'
+const HF_TOKEN = process.env.HUGGING_FACE_API_KEY
 
 import redisPlugin from './plugins/redis.ts'
 
@@ -143,16 +144,17 @@ app.post('/new-ask/:id', async (req, reply) => {
 })
 
 app.get('/stream/:id/:model', async (req, reply) => {
-  const { id, model } = req.params as {
+  const { id /* model */ } = req.params as {
     id: string
     model: string
   }
+  const model = 'openai/gpt-oss-120b'
 
   const messagesKey = `messages:${id}`
 
   try {
     const historyStrings = await app.redis.lRange(messagesKey, 0, -1)
-    const history = historyStrings.map((msg) => JSON.parse(msg))
+    const messages = historyStrings.map((msg) => JSON.parse(msg))
 
     reply.raw.writeHead(200, {
       'Content-Type': 'text/event-stream',
@@ -160,61 +162,84 @@ app.get('/stream/:id/:model', async (req, reply) => {
       Connection: 'keep-alive',
     })
 
-    const response = await fetch(`${ollamaUrl}/api/chat`, {
-      // Correctly using /api/chat
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model,
-        messages: history,
-      }),
-    })
+    // const response = await fetch(`${ollamaUrl}/api/chat`, {
+    //   // Correctly using /api/chat
+    //   method: 'POST',
+    //   headers: { 'Content-Type': 'application/json' },
+    //   body: JSON.stringify({
+    //     model,
+    //     messages: history,
+    //   }),
+    // })
+    // console.log('messages', messages)
+    const response = await fetch(
+      'https://router.huggingface.co/v1/chat/completions',
+      {
+        headers: {
+          Authorization: `Bearer ${HF_TOKEN}`,
+          'Content-Type': 'application/json',
+        },
+        method: 'POST',
+        body: JSON.stringify({
+          model,
+          messages,
+          stream: true,
+        }),
+      },
+    )
 
-    if (!response.body) {
-      reply.raw.end()
-      return
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
     }
 
     const reader = response.body.getReader()
     const decoder = new TextDecoder()
     let fullResponse = ''
 
-    while (true) {
-      const { done, value } = await reader.read()
-      if (done) {
-        const assistantMessage = JSON.stringify({
-          role: 'assistant',
-          content: fullResponse,
-        })
-        await app.redis.rPush(messagesKey, assistantMessage)
-        app.log.info(`Saved assistant response to ${messagesKey}`)
-        break
-      }
+    try {
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
 
-      const chunk = decoder.decode(value, { stream: true })
-      const lines = chunk.split('\n').filter(Boolean)
+        const chunk = decoder.decode(value)
+        const lines = chunk.split('\n')
 
-      for (const line of lines) {
-        try {
-          const json = JSON.parse(line)
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6).trim()
 
-          if (json.message && json.message.content) {
-            const content = json.message.content
-            fullResponse += content
+            if (data === '[DONE]') {
+              console.log('\n✨ Stream complete!')
+              // Ensure the stream is closed properly
+              if (!reply.raw.writableEnded) {
+                reply.raw.end()
+              }
+              return
+            }
 
-            const formattedContent = content.replace(/\n/g, '<br>')
-            reply.raw.write(`data: ${formattedContent}\n\n`)
+            try {
+              const parsed = JSON.parse(data)
+              const content = parsed.choices?.[0]?.delta?.content
+
+              if (content) {
+                fullResponse += content
+                process.stdout.write(content)
+
+                // TODO: stream content to client
+                const formattedContent = content.replace(/\n/g, '<br>')
+                reply.raw.write(`data: ${formattedContent}\n\n`)
+              }
+            } catch (e) {
+              // Silently ignore JSON parse errors
+              continue
+            }
           }
-
-          if (json.done) {
-            reply.raw.write('event: close\ndata: done\n\n')
-            reply.raw.end()
-          }
-        } catch {
-          // skip malformed JSON
         }
       }
+    } finally {
+      reader.releaseLock()
     }
+    // TODO: Save fullResponse to DB
   } catch (err) {
     app.log.error('Error in stream route', err)
     if (!reply.raw.writableEnded) {
