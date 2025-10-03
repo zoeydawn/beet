@@ -95,7 +95,7 @@
   left: -250px; /* hidden by default */
   width: 250px;
   height: 100%;
-  background: var(--pico-background-color);
+  background: rgb(26, 29, 38);
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
   transition: left 0.3s ease;
   padding: 1rem;
@@ -160,4 +160,8 @@
   padding: 8px 12px;
   border-radius: 25%;
   background-color: #000;
+}
+
+#ask-form {
+  padding: 150px 0 100px 0;
 }
