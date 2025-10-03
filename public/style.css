@@ -90,7 +90,7 @@
 }
 
 #drawer {
-  position: absolute;
+  position: fixed;
   top: 0;
   left: -250px; /* hidden by default */
   width: 250px;
