@@ -70,8 +70,8 @@ app.get('/', (req, reply) => {
 })
 
 app.post('/initial-ask', async (req, reply) => {
-  const { 'initial-question': question, model } = req.body as {
-    'initial-question': string
+  const { 'chat-question': question, model } = req.body as {
+    'chat-question': string
     model: string
   }
 
