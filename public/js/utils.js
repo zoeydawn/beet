@@ -1,5 +1,5 @@
 const drawer = document.getElementById('drawer')
-const btn = document.getElementById('menu-btn')
+const btn = document.getElementById('menu-open-btn')
 
 btn.addEventListener('click', (e) => {
   e.stopPropagation() // prevent click bubbling

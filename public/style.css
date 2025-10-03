@@ -106,11 +106,20 @@
   left: 0;
 }
 
-#menu-btn {
+#menu-open-btn {
+  position: fixed;
+  bottom: 1rem;
+  left: 2rem;
+  text-decoration: none;
+  font-size: 45;
+}
+
+#menu-close-btn {
   position: absolute;
-  top: 1rem;
-  left: 1rem;
-  z-index: 1100; /* ensure button stays above drawer */
+  bottom: 1rem;
+  left: 2rem;
+  text-decoration: none;
+  font-size: 45;
 }
 
 .internal-link {
