@@ -1,0 +1,23 @@
+<fieldset role='group'>
+  <input
+    name='chat-question'
+    type='text'
+    placeholder='Ask me anything'
+    aria-label='ask me anything'
+    required
+  />
+  <input type='submit' value='Ask' />
+</fieldset>
+
+<select name='model' aria-label='Select' required>
+  <option disabled value=''>Basic models:</option>
+  <option selected value='gpt-oss-20b'>GPT-OSS 20B</option>
+  <option value='llama3-3'>Llama 3.3</option>
+  <option value='qwen3-coder-30b'>Qwen3-Coder 30B</option>
+
+  <option disabled value=''>Premium models:</option>
+  <option value='gpt-oss-120b'>GPT-OSS 120B</option>
+  <option value='qwen3-coder-480b'>Qwen3-Coder 480B</option>
+  <option value='deepseek-r1'>DeepSeek R1</option>
+  <option value='deepseek-v3-terminus'>DeepSeek V3-Terminus</option>
+</select>

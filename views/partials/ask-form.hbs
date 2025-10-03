@@ -10,28 +10,6 @@
     hx-swap='outerHTML'
     hx-indicator='#loading-spinner'
   >
-    <fieldset role='group'>
-      <input
-        name='chat-question'
-        type='text'
-        placeholder='Ask me anything'
-        aria-label='ask me anything'
-        required
-      />
-      <input type='submit' value='Ask' />
-    </fieldset>
-
-    <select name='model' aria-label='Select' required>
-      <option disabled value=''>Basic models:</option>
-      <option selected>GPT-OSS 20B</option>
-      <option>Llama 3.3</option>
-      <option>Qwen3-Coder 30B</option>
-
-      <option disabled value=''>Premium models:</option>
-      <option>GPT-OSS 120B</option>
-      <option>Qwen3-Coder 480B</option>
-      <option>DeepSeek R1</option>
-      <option>DeepSeek V3-Terminus</option>
-    </select>
+  {{> form-values }}
   </form>
 </section>
