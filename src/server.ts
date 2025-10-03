@@ -192,6 +192,11 @@ app.get('/stream/:id/:model', async (req, reply) => {
       throw new Error(`HTTP error! status: ${response.status}`)
     }
 
+    if (!response.body) {
+      reply.raw.end()
+      return
+    }
+
     const reader = response.body.getReader()
     const decoder = new TextDecoder()
     let fullResponse = ''
@@ -212,6 +217,7 @@ app.get('/stream/:id/:model', async (req, reply) => {
               console.log('\n✨ Stream complete!')
               // Ensure the stream is closed properly
               if (!reply.raw.writableEnded) {
+                reply.raw.write('event: close\ndata: done\n\n')
                 reply.raw.end()
               }
               return
@@ -225,7 +231,7 @@ app.get('/stream/:id/:model', async (req, reply) => {
                 fullResponse += content
                 process.stdout.write(content)
 
-                // TODO: stream content to client
+                // stream content to client
                 const formattedContent = content.replace(/\n/g, '<br>')
                 reply.raw.write(`data: ${formattedContent}\n\n`)
               }
