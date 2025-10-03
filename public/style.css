@@ -71,23 +71,23 @@
 /*   max-width: 950px; */
 /* } */
 
-@media (min-width: 1024px) {
-  .container {
-    max-width: 950px;
-  }
-}
-
-@media (min-width: 1280px) {
-  .container {
-    max-width: 950px;
-  }
-}
-
-@media (min-width: 1536px) {
-  .container {
-    max-width: 950px;
-  }
-}
+/* @media (min-width: 1024px) { */
+/*   .container { */
+/*     max-width: 950px; */
+/*   } */
+/* } */
+/**/
+/* @media (min-width: 1280px) { */
+/*   .container { */
+/*     max-width: 950px; */
+/*   } */
+/* } */
+/**/
+/* @media (min-width: 1536px) { */
+/*   .container { */
+/*     max-width: 950px; */
+/*   } */
+/* } */
 
 #drawer {
   position: fixed;
@@ -143,7 +143,8 @@
 }
 
 #main {
-  margin-top: 75px;
+  margin-top: 20px;
+  /* position: relative; */
 }
 
 .new-chat-button {
@@ -153,9 +154,8 @@
 
 #new-chat-top-btn {
   position: fixed;
-  top: 85px;
-  left: 50%;
-  transform: translateX(-50%);
+  top: 26px;
+  right: 15px;
   z-index: 1000;
   padding: 8px 12px;
   border-radius: 25%;
@@ -164,19 +164,48 @@
 
 #ask-form {
   padding: 150px 0 100px 0;
-  position: relative;
+  /* position: relative; */
 }
 
 #chat {
-  position: relative;
+  /* position: relative; */
+  margin-top: 20px;
 }
 
 #model-select {
-  position: absolute;
-  top: 0;
-  left: 0;
+  position: fixed;
+  top: 20px;
+  left: 15px;
   width: 220px;
   font-size: 12px;
   background-color: #000;
   color: var(--pico-primary-background);
+}
+
+@media (min-width: 576px) {
+  #model-select {
+    left: 50px;
+  }
+
+  #new-chat-top-btn {
+    right: 50px;
+  }
+}
+
+@media (min-width: 1280px) {
+  #model-select {
+    left: 150px;
+  }
+
+  #new-chat-top-btn {
+    right: 150px;
+  }
+}
+
+@media (max-width: 576px) {
+  .container {
+    max-width: calc(100% - 24px);
+    margin-left: 12px;
+    margin-right: 12px;
+  }
 }
