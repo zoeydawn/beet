@@ -95,7 +95,7 @@
   left: -250px; /* hidden by default */
   width: 250px;
   height: 100%;
-  background: rgb(26, 29, 38);
+  background: #000;
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
   transition: left 0.3s ease;
   padding: 1rem;
@@ -106,10 +106,20 @@
   left: 0;
 }
 
+#sidebar {
+  position: fixed;
+  top: 0;
+  width: 55px;
+  height: 100%;
+  background: #000;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+  z-index: 900;
+}
+
 #menu-open-btn {
   position: fixed;
   bottom: 1rem;
-  left: 2rem;
+  left: 1rem;
   text-decoration: none;
   font-size: 45;
 }
@@ -117,7 +127,7 @@
 #menu-close-btn {
   position: absolute;
   bottom: 1rem;
-  left: 2rem;
+  left: 1rem;
   text-decoration: none;
   font-size: 45;
 }
@@ -144,7 +154,7 @@
 
 #main {
   margin-top: 20px;
-  /* position: relative; */
+  margin-left: 55px;
 }
 
 .new-chat-button {
@@ -175,7 +185,7 @@
 #model-select {
   position: fixed;
   top: 20px;
-  left: 15px;
+  left: 70px;
   width: 220px;
   font-size: 12px;
   background-color: #000;
@@ -184,7 +194,7 @@
 
 @media (min-width: 576px) {
   #model-select {
-    left: 50px;
+    left: 100px;
   }
 
   #new-chat-top-btn {
@@ -194,7 +204,7 @@
 
 @media (min-width: 1280px) {
   #model-select {
-    left: 150px;
+    left: 200px;
   }
 
   #new-chat-top-btn {
@@ -208,4 +218,6 @@
     margin-left: 12px;
     margin-right: 12px;
   }
+
+  /* TODO: handle sidebar style for small screens  */
 }
