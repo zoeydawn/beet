@@ -66,7 +66,7 @@ handlebars.registerHelper('eq', (a: any, b: any) => a === b)
 
 app.get('/', (req, reply) => {
   console.log('GET / called')
-  reply.view('home', { title: 'z-LLM' })
+  reply.view('home', { title: 'Beet - Ultra lightweight AI chat' })
 })
 
 app.post('/initial-ask', async (req, reply) => {

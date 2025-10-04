@@ -1,7 +1,7 @@
 {
-  "name": "z-llm",
+  "name": "beet",
   "version": "1.0.0",
-  "description": "",
+  "description": "Ultra lightweight AI chat.",
   "license": "ISC",
   "author": "",
   "type": "module",
