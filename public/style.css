@@ -67,28 +67,6 @@
   border-bottom-color: var(--pico-contrast-background);
 }
 
-/* .container { */
-/*   max-width: 950px; */
-/* } */
-
-/* @media (min-width: 1024px) { */
-/*   .container { */
-/*     max-width: 950px; */
-/*   } */
-/* } */
-/**/
-/* @media (min-width: 1280px) { */
-/*   .container { */
-/*     max-width: 950px; */
-/*   } */
-/* } */
-/**/
-/* @media (min-width: 1536px) { */
-/*   .container { */
-/*     max-width: 950px; */
-/*   } */
-/* } */
-
 #drawer {
   position: fixed;
   top: 0;
@@ -174,11 +152,9 @@
 
 #ask-form {
   padding: 150px 0 100px 0;
-  /* position: relative; */
 }
 
 #chat {
-  /* position: relative; */
   margin-top: 20px;
 }
 
@@ -219,9 +195,7 @@
     margin-right: 12px;
   }
 
-  /* TODO: handle sidebar style for small screens  */
   #sidebar {
-    /* display: none; */
     width: 0;
   }
 
