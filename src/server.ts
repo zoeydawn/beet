@@ -100,6 +100,7 @@ app.post('/initial-ask', async (req, reply) => {
     await app.redis.rPush(messagesKey, firstMessage)
 
     // 3. Associate chat with session
+    // TODO: assocciate chat with user if logged in
     const sessionChatsKey = `session:${req.session.sessionId}:chats`
     await app.redis.rPush(sessionChatsKey, streamId)
 
@@ -122,7 +123,10 @@ app.post('/initial-ask', async (req, reply) => {
 
 app.post('/new-ask/:id', async (req, reply) => {
   const { id } = req.params as { id: string }
-  const { 'chat-question': question } = req.body as { 'chat-question': string }
+  const { 'chat-question': question, model } = req.body as {
+    'chat-question': string
+    model: string
+  }
 
   const messagesKey = `messages:${id}`
 
@@ -138,10 +142,15 @@ app.post('/new-ask/:id', async (req, reply) => {
     // Get the model from the chat metadata
     const chatData = await app.redis.hGetAll(`chat:${id}`)
 
+    if (chatData.model !== model) {
+      // the model has changed, update it.
+      await app.redis.hSet(`chat:${id}`, 'model', model)
+    }
+
     // Respond with a partial that will trigger the stream
     return reply.view('partials/chat-bubbles.hbs', {
       id: id,
-      model: chatData.model,
+      model,
       question: question,
     })
   } catch (err) {
