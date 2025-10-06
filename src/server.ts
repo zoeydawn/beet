@@ -10,27 +10,6 @@ import cookie from '@fastify/cookie'
 // import rateLimit from '@fastify/rate-limit'
 import { marked } from 'marked'
 
-// TODO: move to a util file
-const modelGroups = [
-  {
-    groupName: 'Basic models',
-    models: [
-      { value: 'gpt-oss-20b', label: 'GPT-OSS 20B', selected: true },
-      { value: 'llama3-3', label: 'Llama 3.3' },
-      { value: 'qwen3-coder-30b', label: 'Qwen3-Coder 30B' },
-    ],
-  },
-  {
-    groupName: 'Premium models',
-    models: [
-      { value: 'gpt-oss-120b', label: 'GPT-OSS 120B' },
-      { value: 'qwen3-coder-480b', label: 'Qwen3-Coder 480B' },
-      { value: 'deepseek-r1', label: 'DeepSeek R1' },
-      { value: 'deepseek-v3-terminus', label: 'DeepSeek V3-Terminus' },
-    ],
-  },
-]
-
 import dotenv from 'dotenv'
 dotenv.config()
 
@@ -38,6 +17,7 @@ const isProduction = process.env.NODE_ENV === 'production'
 const HF_TOKEN = process.env.HUGGING_FACE_API_KEY
 
 import redisPlugin from './plugins/redis.ts'
+import { models, createModelGroups } from './utils/models.ts'
 
 const ollamaUrl = 'http://localhost:11434'
 
@@ -87,6 +67,8 @@ handlebars.registerHelper('eq', (a: any, b: any) => a === b)
 
 app.get('/', (req, reply) => {
   console.log('GET / called')
+
+  const modelGroups = createModelGroups(models)
   reply.view('home', { title: 'Beet - Ultra lightweight AI chat', modelGroups })
 })
 
@@ -127,6 +109,8 @@ app.post('/initial-ask', async (req, reply) => {
   } catch (err) {
     app.log.error('Failed to save initial chat to Redis', err)
   }
+
+  const modelGroups = createModelGroups(models, model)
 
   return reply.view('partials/chat.hbs', {
     id: streamId,
@@ -279,6 +263,7 @@ app.get('/stream/:id/:model', async (req, reply) => {
 })
 
 app.get('/new-chat', (req, reply) => {
+  const modelGroups = createModelGroups(models)
   reply.view('partials/ask-form.hbs', { modelGroups })
 })
 
@@ -314,6 +299,8 @@ app.get('/chat/:id', async (req, reply) => {
 
     return msg
   })
+
+  const modelGroups = createModelGroups(models, chatMeta.model)
 
   return reply.view('partials/existing-chat.hbs', {
     id,
