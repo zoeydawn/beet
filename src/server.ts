@@ -10,6 +10,27 @@ import cookie from '@fastify/cookie'
 // import rateLimit from '@fastify/rate-limit'
 import { marked } from 'marked'
 
+// TODO: move to a util file
+const modelGroups = [
+  {
+    groupName: 'Basic models',
+    models: [
+      { value: 'gpt-oss-20b', label: 'GPT-OSS 20B', selected: true },
+      { value: 'llama3-3', label: 'Llama 3.3' },
+      { value: 'qwen3-coder-30b', label: 'Qwen3-Coder 30B' },
+    ],
+  },
+  {
+    groupName: 'Premium models',
+    models: [
+      { value: 'gpt-oss-120b', label: 'GPT-OSS 120B' },
+      { value: 'qwen3-coder-480b', label: 'Qwen3-Coder 480B' },
+      { value: 'deepseek-r1', label: 'DeepSeek R1' },
+      { value: 'deepseek-v3-terminus', label: 'DeepSeek V3-Terminus' },
+    ],
+  },
+]
+
 import dotenv from 'dotenv'
 dotenv.config()
 
@@ -66,7 +87,7 @@ handlebars.registerHelper('eq', (a: any, b: any) => a === b)
 
 app.get('/', (req, reply) => {
   console.log('GET / called')
-  reply.view('home', { title: 'Beet - Ultra lightweight AI chat' })
+  reply.view('home', { title: 'Beet - Ultra lightweight AI chat', modelGroups })
 })
 
 app.post('/initial-ask', async (req, reply) => {
@@ -111,6 +132,7 @@ app.post('/initial-ask', async (req, reply) => {
     id: streamId,
     model,
     question,
+    modelGroups,
   })
 })
 
@@ -257,7 +279,7 @@ app.get('/stream/:id/:model', async (req, reply) => {
 })
 
 app.get('/new-chat', (req, reply) => {
-  reply.view('partials/ask-form.hbs')
+  reply.view('partials/ask-form.hbs', { modelGroups })
 })
 
 app.get('/chat-history', async (req, reply) => {
@@ -297,6 +319,7 @@ app.get('/chat/:id', async (req, reply) => {
     id,
     model: chatMeta.model,
     messages: parsedMessages,
+    modelGroups,
   })
 })
 
