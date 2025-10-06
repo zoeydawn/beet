@@ -150,17 +150,18 @@ app.post('/new-ask/:id', async (req, reply) => {
 })
 
 app.get('/stream/:id/:model', async (req, reply) => {
-  const { id /* model */ } = req.params as {
+  const { id, model } = req.params as {
     id: string
     model: string
   }
-  const model = 'openai/gpt-oss-120b'
 
   const messagesKey = `messages:${id}`
 
   try {
     const historyStrings = await app.redis.lRange(messagesKey, 0, -1)
     const messages = historyStrings.map((msg) => JSON.parse(msg))
+
+    const { hfValue } = models[model]
 
     reply.raw.writeHead(200, {
       'Content-Type': 'text/event-stream',
@@ -177,7 +178,7 @@ app.get('/stream/:id/:model', async (req, reply) => {
         },
         method: 'POST',
         body: JSON.stringify({
-          model,
+          model: hfValue,
           messages,
           stream: true,
         }),
