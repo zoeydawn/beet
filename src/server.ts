@@ -170,7 +170,7 @@ app.get('/stream/:id/:model', async (req, reply) => {
     const historyStrings = await app.redis.lRange(messagesKey, 0, -1)
     const messages = historyStrings.map((msg) => JSON.parse(msg))
 
-    const { hfValue } = models[model]
+    const { hfValue, maxTokens } = models[model]
 
     reply.raw.writeHead(200, {
       'Content-Type': 'text/event-stream',
@@ -190,6 +190,7 @@ app.get('/stream/:id/:model', async (req, reply) => {
           model: hfValue,
           messages,
           stream: true,
+          max_tokens: maxTokens,
         }),
       },
     )
