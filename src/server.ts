@@ -72,6 +72,12 @@ app.get('/', (req, reply) => {
   reply.view('home', { title: 'Beet - Ultra lightweight AI chat', modelGroups })
 })
 
+app.get('/login', (req, reply) => {
+  console.log('GET / called')
+
+  reply.view('login', { title: 'Beet - Ultra lightweight AI chat' })
+})
+
 app.post('/initial-ask', async (req, reply) => {
   const { 'chat-question': question, model } = req.body as {
     'chat-question': string

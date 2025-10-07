@@ -238,3 +238,16 @@
   align-items: center;
   gap: 8px;
 }
+
+#login-container {
+  max-width: 700px;
+  margin-top: 1rem;
+}
+
+.back-button {
+  text-decoration: none;
+}
+
+.top-link {
+  margin: 1rem 0;
+}
