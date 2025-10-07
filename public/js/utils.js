@@ -1,7 +1,18 @@
 const drawer = document.getElementById('drawer')
 const btn = document.getElementById('menu-open-btn')
+const sidebar = document.getElementById('sidebar')
 
 btn.addEventListener('click', (e) => {
+  e.stopPropagation() // prevent click bubbling
+  drawer.classList.toggle('open')
+
+  if (drawer.classList.contains('open')) {
+    // console.log('open')
+    htmx.trigger(drawer, 'revealed') // load chats when drawer opens
+  }
+})
+
+sidebar.addEventListener('click', (e) => {
   e.stopPropagation() // prevent click bubbling
   drawer.classList.toggle('open')
 

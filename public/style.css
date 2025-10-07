@@ -78,6 +78,10 @@
   transition: left 0.3s ease;
   padding: 1rem;
   z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: start;
 }
 
 #drawer.open {
@@ -92,6 +96,13 @@
   background: #000;
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
   z-index: 900;
+  padding-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: start;
+  gap: 1rem;
+  cursor: pointer;
 }
 
 #menu-open-btn {
@@ -199,6 +210,10 @@
     width: 0;
   }
 
+  #sidebar-login-button {
+    display: none;
+  }
+
   #main {
     margin-left: 0;
   }
@@ -211,4 +226,15 @@
 #footer {
   display: flex;
   justify-content: center;
+}
+
+.user-icon {
+  height: 40px;
+}
+
+.login-button {
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
