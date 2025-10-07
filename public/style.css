@@ -251,3 +251,8 @@
 .top-link {
   margin: 1rem 0;
 }
+
+.centered {
+  display: flex;
+  justify-content: center;
+}

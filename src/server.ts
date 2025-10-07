@@ -298,6 +298,14 @@ app.get('/chat-history', async (req, reply) => {
   return reply.view('partials/chat-list.hbs', { chats })
 })
 
+app.get('/login-form', (req, reply) => {
+  reply.view('partials/login-form.hbs')
+})
+
+app.get('/create-account-form', (req, reply) => {
+  reply.view('partials/create-account-form.hbs')
+})
+
 app.get('/chat/:id', async (req, reply) => {
   const { id } = req.params as { id: string }
 

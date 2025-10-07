@@ -13,38 +13,8 @@
 	<div class="top-link">
             <a class='internal-link back-button' href='/'>« Back to chat</a>
 	</div>
-        <article>
-            <hgroup>
-                <h2>Login</h2>
-                <h3>Access your chats</h3>
-            </hgroup>
-            <div class='grid'>
-              <div class='col-sm-12 col-md-6 col-lg-4 offset-md-3 offset-lg-4'>
-                <form action="/login" method="post" hx-boost="false">
-                    {{#if errorMessage}}
-                        <p aria-invalid="true" role="alert">{{errorMessage}}</p>
-                    {{/if}}
-                    <input
-                        type="text"
-                        name="username"
-                        placeholder="Username"
-                        aria-label="Username"
-                        autocomplete="username"
-                        required
-                    />
-                    <input
-                        type="password"
-                        name="password"
-                        placeholder="Password"
-                        aria-label="Password"
-                        autocomplete="current-password"
-                        required
-                    />
-                    <button type="submit">Log in</button>
-                    <!-- <small>For demo purposes, any username with password **'password'** will work.</small> -->
-                </form>
-              </div>
-            </div>
+        <article id='login-form'>
+		{{> login-form}}
         </article>
     </main>
 
