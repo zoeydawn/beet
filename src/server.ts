@@ -134,12 +134,12 @@ const getChatKeyPrefix = (req: FastifyRequest) => {
 /**
  * Pre-handler to enforce authentication for actions that require a permanent user (e.g., viewing history).
  */
-const requireLogin = async (req: FastifyRequest, reply: FastifyReply) => {
-  if (!req.userId) {
-    reply.header('HX-Redirect', '/login')
-    return reply.status(401).send()
-  }
-}
+// const requireLogin = async (req: FastifyRequest, reply: FastifyReply) => {
+//   if (!req.userId) {
+//     reply.header('HX-Redirect', '/login')
+//     return reply.status(401).send()
+//   }
+// }
 
 app.get('/', { preHandler: optionalVerifyJWT }, (req, reply) => {
   console.log('GET / called')
@@ -194,14 +194,32 @@ app.post('/login', async (req, reply) => {
 })
 
 // POST /logout (Handle logout)
-app.post('/logout', async (req, reply) => {
-  // Clear the JWT cookie (stateless logout)
-  reply.clearCookie('auth_token')
+// app.post('/logout', async (req, reply) => {
+//   // Clear the JWT cookie (stateless logout)
+//   reply.clearCookie('auth_token')
+//
+//   app.log.info('User logged out.')
+//   // Use HTMX to perform a client-side redirect back to the home page
+//   reply.header('HX-Redirect', '/')
+//   return reply.status(204).send()
+// })
+
+// SECURED ROUTE (Logout)
+app.post('/logout', { preHandler: optionalVerifyJWT }, async (req, reply) => {
+  // 1. Clear the JWT cookie (stateless logout)
+  reply.clearCookie('auth_token', {
+    httpOnly: true,
+    secure: isProduction,
+    path: '/',
+  })
 
   app.log.info('User logged out.')
-  // Use HTMX to perform a client-side redirect back to the home page
-  reply.header('HX-Redirect', '/')
-  return reply.status(204).send()
+
+  const user = undefined // Ensure the 'user' object is not present in the context
+
+  reply.header('HX-Retarget', '#drawer') // Target the drawer
+
+  return reply.view('partials/drawer-content.hbs', { user })
 })
 
 app.post(
