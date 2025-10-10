@@ -315,7 +315,7 @@ app.post(
         model: model,
         createdAt: new Date().toISOString(),
         // Store userId or a placeholder if anonymous
-        userId: req.userId || `session:${req.session.sessionId}`, // <--- Ensure a unique identifier is saved
+        userId: req.userId || `session:${req.session.sessionId}`,
         title: question.slice(0, 15),
       })
 
@@ -326,10 +326,10 @@ app.post(
       })
       await app.redis.rPush(messagesKey, firstMessage)
 
-      // 3. Associate chat with user/session (ALWAYS SAVE HISTORY NOW)
+      // 3. Associate chat with user/session
       const userChatsKeyPrefix = getChatKeyPrefix(req)
       const sessionChatsKey = userChatsKeyPrefix + ':chats'
-      await app.redis.rPush(sessionChatsKey, streamId) // <--- ALWAYS SAVES HISTORY
+      await app.redis.rPush(sessionChatsKey, streamId)
 
       app.log.info(
         `Started new chat: ${chatKey} (${req.userId ? 'user' : 'session'} ${req.userId || req.session.sessionId})`,
