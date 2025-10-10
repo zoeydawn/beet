@@ -21,7 +21,7 @@ const isProduction = process.env.NODE_ENV === 'production'
 const HF_TOKEN = process.env.HUGGING_FACE_API_KEY
 const JWT_SECRET = process.env.JWT_SECRET
 const JWT_EXPIRY = '7d' // token expiry time // TODO: update this
-
+const SESSION_SECRET = process.env.SESSION_SECRET
 const USER_KEY_PREFIX = 'user:'
 
 import redisPlugin from './plugins/redis.ts'
@@ -30,6 +30,11 @@ import { models, createModelGroups } from './utils/models.ts'
 // Check for required secrets
 if (!JWT_SECRET) {
   console.error('JWT_SECRET is not defined. Please check your .env file.')
+  process.exit(1)
+}
+
+if (!SESSION_SECRET) {
+  console.error('SESSION_SECRET is not defined. Please check your .env file.')
   process.exit(1)
 }
 
@@ -76,7 +81,7 @@ fs.readdirSync(partialsDir).forEach((file) => {
 // needed for the anonymous fallback.
 app.register(cookie)
 app.register(session, {
-  secret: process.env.SESSION_SECRET!,
+  secret: SESSION_SECRET,
   cookie: { secure: isProduction },
   saveUninitialized: true,
 })
@@ -133,16 +138,6 @@ const getChatKeyPrefix = (req: FastifyRequest) => {
   // This is used to track anonymous history.
   return `session:${req.session.sessionId}`
 }
-
-/**
- * Pre-handler to enforce authentication for actions that require a permanent user (e.g., viewing history).
- */
-// const requireLogin = async (req: FastifyRequest, reply: FastifyReply) => {
-//   if (!req.userId) {
-//     reply.header('HX-Redirect', '/login')
-//     return reply.status(401).send()
-//   }
-// }
 
 app.get('/', { preHandler: optionalVerifyJWT }, (req, reply) => {
   console.log('GET / called')
@@ -319,8 +314,8 @@ app.post(
       await app.redis.hSet(chatKey, {
         model: model,
         createdAt: new Date().toISOString(),
-        // sessionId: req.session.sessionId,
-        userId: req.userId,
+        // Store userId or a placeholder if anonymous
+        userId: req.userId || `session:${req.session.sessionId}`, // <--- Ensure a unique identifier is saved
         title: question.slice(0, 15),
       })
 
@@ -331,9 +326,10 @@ app.post(
       })
       await app.redis.rPush(messagesKey, firstMessage)
 
-      // 3. Associate chat with user
-      const userChatsKey = getChatKeyPrefix(req) + ':chats' // <--- USES FALLBACK LOGIC
-      await app.redis.rPush(userChatsKey, streamId)
+      // 3. Associate chat with user/session (ALWAYS SAVE HISTORY NOW)
+      const userChatsKeyPrefix = getChatKeyPrefix(req)
+      const sessionChatsKey = userChatsKeyPrefix + ':chats'
+      await app.redis.rPush(sessionChatsKey, streamId) // <--- ALWAYS SAVES HISTORY
 
       app.log.info(
         `Started new chat: ${chatKey} (${req.userId ? 'user' : 'session'} ${req.userId || req.session.sessionId})`,
@@ -341,7 +337,6 @@ app.post(
     } catch (err) {
       app.log.error('Failed to save initial chat to Redis', err)
     }
-
     const modelGroups = createModelGroups(models, model)
 
     return reply.view('partials/chat.hbs', {
