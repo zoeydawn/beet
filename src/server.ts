@@ -8,6 +8,7 @@ import fastifyStatic from '@fastify/static'
 import formBody from '@fastify/formbody'
 import session from '@fastify/session'
 import cookie from '@fastify/cookie'
+import * as bcrypt from 'bcryptjs'
 // import rateLimit from '@fastify/rate-limit'
 import { marked } from 'marked'
 import jwt from 'jsonwebtoken'
@@ -20,6 +21,8 @@ const isProduction = process.env.NODE_ENV === 'production'
 const HF_TOKEN = process.env.HUGGING_FACE_API_KEY
 const JWT_SECRET = process.env.JWT_SECRET
 const JWT_EXPIRY = '7d' // token expiry time // TODO: update this
+
+const USER_KEY_PREFIX = 'user:'
 
 import redisPlugin from './plugins/redis.ts'
 import { models, createModelGroups } from './utils/models.ts'
@@ -159,50 +162,125 @@ app.get('/login', (req, reply) => {
   reply.view('login.hbs')
 })
 
-// POST /login (Handle login attempt)
 app.post('/login', async (req, reply) => {
   const { username, password } = req.body as any
+  const userId = username.toLowerCase()
+  const userKey = `${USER_KEY_PREFIX}${userId}`
 
-  // ⚠️ TEMPORARY: Simple hardcoded authentication check
-  // In a real application, you would check a database (e.g., hash the password)
-  if (username && password === 'password') {
-    const userId = 'user-' + username.toLowerCase()
+  const existingUser = await app.redis.hGetAll(userKey)
 
-    // 1. Create the JWT payload
-    const payload = { userId, username }
+  // 1. Check if user exists
+  if (Object.keys(existingUser).length === 0) {
+    // Return a generic error message for security
+    return reply.view('login.hbs', {
+      title: 'Beet - Ultra lightweight AI chat',
+      errorMessage: 'Invalid username or password.',
+    })
+  }
 
-    // 2. Sign the token
+  // 2. Compare the provided password with the stored hash
+  const isMatch = await bcrypt.compare(password, existingUser.passwordHash)
+
+  if (isMatch) {
+    // Login successful (Steps 3, 4, 5 from /register logic, but simpler)
+    const payload = { userId, username: existingUser.username }
     const token = sign(payload, JWT_SECRET!, { expiresIn: JWT_EXPIRY })
 
-    // 3. Set the JWT as an HTTP-only cookie
     reply.setCookie('auth_token', token, {
       httpOnly: true,
       secure: isProduction,
-      maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
+      maxAge: 7 * 24 * 60 * 60,
       path: '/',
     })
 
-    app.log.info(`User logged in: ${username} (via JWT)`)
+    app.log.info(`User logged in: ${existingUser.username} (via JWT)`)
     return reply.redirect('/')
   }
 
-  // Authentication failed
+  // Password mismatch
   reply.view('login.hbs', {
     title: 'Beet - Ultra lightweight AI chat',
     errorMessage: 'Invalid username or password.',
   })
 })
 
-// POST /logout (Handle logout)
-// app.post('/logout', async (req, reply) => {
-//   // Clear the JWT cookie (stateless logout)
-//   reply.clearCookie('auth_token')
-//
-//   app.log.info('User logged out.')
-//   // Use HTMX to perform a client-side redirect back to the home page
-//   reply.header('HX-Redirect', '/')
-//   return reply.status(204).send()
-// })
+/**
+ * Endpoint to register a new user.
+ * POST /register
+ */
+app.post('/register', async (req, reply) => {
+  const {
+    username,
+    password,
+    'confirm-password': confirmPassword, // Destructure with a clean name
+  } = req.body as any
+
+  // 1. Validation (Basic checks)
+  if (!username || !password || !confirmPassword) {
+    return reply.view('login.hbs', {
+      // Render the login page which contains the form
+      title: 'Beet - Ultra lightweight AI chat',
+      errorMessage: 'All fields are required.',
+    })
+  }
+
+  if (password !== confirmPassword) {
+    return reply.view('login.hbs', {
+      title: 'Beet - Ultra lightweight AI chat',
+      errorMessage: 'Passwords do not match.',
+    })
+  }
+
+  // 2. Check for existing user in Redis
+  const userId = username.toLowerCase()
+  const userKey = `${USER_KEY_PREFIX}${userId}`
+
+  const existingUser = await app.redis.hGetAll(userKey)
+
+  if (Object.keys(existingUser).length > 0) {
+    return reply.view('login.hbs', {
+      title: 'Beet - Ultra lightweight AI chat',
+      errorMessage: 'Username already taken.',
+    })
+  }
+
+  // 3. Hash the password
+  const salt = await bcrypt.genSalt(10) // 10 rounds is standard
+  const hashedPassword = await bcrypt.hash(password, salt)
+
+  // 4. Save the new user to Redis Hash
+  try {
+    await app.redis.hSet(userKey, {
+      id: userId,
+      username: username, // Save original casing for display
+      passwordHash: hashedPassword,
+      createdAt: new Date().toISOString(),
+    })
+    app.log.info(`New user registered: ${username}`)
+  } catch (err) {
+    app.log.error('Failed to save new user to Redis', err)
+    return reply.view('login.hbs', {
+      title: 'Beet - Ultra lightweight AI chat',
+      errorMessage: 'Account creation failed due to a server error.',
+    })
+  }
+
+  // 5. Registration successful - Log the user in immediately
+
+  // This logic is duplicated from the /login route, but it's okay for now.
+  const payload = { userId, username }
+  const token = sign(payload, JWT_SECRET!, { expiresIn: JWT_EXPIRY })
+
+  reply.setCookie('auth_token', token, {
+    httpOnly: true,
+    secure: isProduction,
+    maxAge: 7 * 24 * 60 * 60,
+    path: '/',
+  })
+
+  // Redirect to the home page
+  return reply.redirect('/')
+})
 
 // SECURED ROUTE (Logout)
 app.post('/logout', { preHandler: optionalVerifyJWT }, async (req, reply) => {
