@@ -1,4 +1,5 @@
 import Fastify from 'fastify'
+import type { FastifyRequest, FastifyReply } from 'fastify'
 import view from '@fastify/view'
 import handlebars from 'handlebars'
 import path from 'path'
@@ -9,17 +10,33 @@ import session from '@fastify/session'
 import cookie from '@fastify/cookie'
 // import rateLimit from '@fastify/rate-limit'
 import { marked } from 'marked'
+import jwt from 'jsonwebtoken'
+const { sign, verify } = jwt
 
 import dotenv from 'dotenv'
 dotenv.config()
 
 const isProduction = process.env.NODE_ENV === 'production'
 const HF_TOKEN = process.env.HUGGING_FACE_API_KEY
+const JWT_SECRET = process.env.JWT_SECRET
+const JWT_EXPIRY = '7d' // token expiry time // TODO: update this
 
 import redisPlugin from './plugins/redis.ts'
 import { models, createModelGroups } from './utils/models.ts'
 
-const ollamaUrl = 'http://localhost:11434'
+// Check for required secrets
+if (!JWT_SECRET) {
+  console.error('JWT_SECRET is not defined. Please check your .env file.')
+  process.exit(1)
+}
+
+// include user data extracted from JWT
+declare module 'fastify' {
+  interface FastifyRequest {
+    userId?: string
+    username?: string
+  }
+}
 
 const app = Fastify({ logger: true })
 
@@ -52,6 +69,8 @@ fs.readdirSync(partialsDir).forEach((file) => {
 })
 
 // Cookie + session
+
+// needed for the anonymous fallback.
 app.register(cookie)
 app.register(session, {
   secret: process.env.SESSION_SECRET!,
@@ -61,242 +80,367 @@ app.register(session, {
 
 // register helpers
 handlebars.registerHelper('eq', (a: any, b: any) => a === b)
+// handlebars.registerHelper('isLoggedIn', (req: any) => !!req.userId)
+handlebars.registerHelper('isLoggedIn', (context: any) => !!context.user)
 
 // TODO: configure rate limit
 // app.register(rateLimit, { max: 100, timeWindow: '15 minutes' })
 
-app.get('/', (req, reply) => {
+// --- UTILITY FUNCTIONS ---
+
+/**
+ * Executes JWT verification if a token is present, setting req.userId/username.
+ * Does NOT block the request if no token is present.
+ */
+const optionalVerifyJWT = async (req: FastifyRequest, reply: FastifyReply) => {
+  const token = req.cookies.auth_token // Get the JWT from the cookie
+
+  if (!token) {
+    // No token, this is an anonymous user. Do nothing and proceed.
+    return
+  }
+
+  try {
+    const decoded = verify(token, JWT_SECRET!) as {
+      userId: string
+      username: string
+      iat: number
+      exp: number
+    }
+
+    // Attach user data to the request object
+    req.userId = decoded.userId
+    req.username = decoded.username
+  } catch (err) {
+    app.log.warn('Invalid or expired token. Clearing cookie.')
+    // Clear the bad token but allow the request to proceed as anonymous
+    reply.clearCookie('auth_token')
+  }
+}
+
+/**
+ * Returns the Redis key prefix for saving chats, prioritizing JWT user ID over Session ID.
+ */
+const getChatKeyPrefix = (req: FastifyRequest) => {
+  // Priority 1: Logged-in user ID from JWT
+  if (req.userId) {
+    return `user:${req.userId}`
+  }
+  // Priority 2: Anonymous session ID (still provided by the session plugin)
+  // This is used to track anonymous history.
+  return `session:${req.session.sessionId}`
+}
+
+/**
+ * Pre-handler to enforce authentication for actions that require a permanent user (e.g., viewing history).
+ */
+const requireLogin = async (req: FastifyRequest, reply: FastifyReply) => {
+  if (!req.userId) {
+    reply.header('HX-Redirect', '/login')
+    return reply.status(401).send()
+  }
+}
+
+app.get('/', { preHandler: optionalVerifyJWT }, (req, reply) => {
   console.log('GET / called')
 
   const modelGroups = createModelGroups(models)
-  reply.view('home', { title: 'Beet - Ultra lightweight AI chat', modelGroups })
-})
+  // Pass user data if logged in
+  const user = req.userId ? { username: req.username } : null
 
-app.get('/login', (req, reply) => {
-  console.log('GET / called')
-
-  reply.view('login', { title: 'Beet - Ultra lightweight AI chat' })
-})
-
-app.post('/initial-ask', async (req, reply) => {
-  const { 'chat-question': question, model } = req.body as {
-    'chat-question': string
-    model: string
-  }
-
-  const streamId = crypto.randomUUID()
-
-  try {
-    const chatKey = `chat:${streamId}`
-    const messagesKey = `messages:${streamId}`
-
-    // 1. Store the chat metadata in a Hash
-    await app.redis.hSet(chatKey, {
-      model: model,
-      createdAt: new Date().toISOString(),
-      sessionId: req.session.sessionId,
-      title: question.slice(0, 15),
-    })
-
-    // 2. Store the first user message in a List
-    const firstMessage = JSON.stringify({
-      role: 'user',
-      content: question,
-    })
-    await app.redis.rPush(messagesKey, firstMessage)
-
-    // 3. Associate chat with session
-    // TODO: assocciate chat with user if logged in
-    const sessionChatsKey = `session:${req.session.sessionId}:chats`
-    await app.redis.rPush(sessionChatsKey, streamId)
-
-    app.log.info(
-      `Started new chat: ${chatKey} (session ${req.session.sessionId})`,
-    )
-  } catch (err) {
-    app.log.error('Failed to save initial chat to Redis', err)
-  }
-
-  const modelGroups = createModelGroups(models, model)
-
-  return reply.view('partials/chat.hbs', {
-    id: streamId,
-    model,
-    question,
+  reply.view('home', {
+    title: 'Beet - Ultra lightweight AI chat',
     modelGroups,
+    user,
   })
 })
 
-app.post('/new-ask/:id', async (req, reply) => {
-  const { id } = req.params as { id: string }
-  const { 'chat-question': question, model } = req.body as {
-    'chat-question': string
-    model: string
-  }
-
-  const messagesKey = `messages:${id}`
-
-  try {
-    // Save the new user prompt to the Redis list
-    const userMessage = JSON.stringify({
-      role: 'user',
-      content: question,
-    })
-    await app.redis.rPush(messagesKey, userMessage)
-    app.log.info(`Saved new prompt to ${messagesKey}`)
-
-    // Get the model from the chat metadata
-    const chatData = await app.redis.hGetAll(`chat:${id}`)
-
-    if (chatData.model !== model) {
-      // the model has changed, update it.
-      await app.redis.hSet(`chat:${id}`, 'model', model)
-    }
-
-    // Respond with a partial that will trigger the stream
-    return reply.view('partials/chat-bubbles.hbs', {
-      id: id,
-      model,
-      question: question,
-    })
-  } catch (err) {
-    app.log.error('Failed to save new prompt to Redis', err)
-  }
+app.get('/login', (req, reply) => {
+  reply.view('login.hbs')
 })
 
-app.get('/stream/:id/:model', async (req, reply) => {
-  const { id, model } = req.params as {
-    id: string
-    model: string
-  }
+// POST /login (Handle login attempt)
+app.post('/login', async (req, reply) => {
+  const { username, password } = req.body as any
 
-  const messagesKey = `messages:${id}`
+  // ⚠️ TEMPORARY: Simple hardcoded authentication check
+  // In a real application, you would check a database (e.g., hash the password)
+  if (username && password === 'password') {
+    const userId = 'user-' + username.toLowerCase()
 
-  try {
-    const historyStrings = await app.redis.lRange(messagesKey, 0, -1)
-    const messages = historyStrings.map((msg) => JSON.parse(msg))
+    // 1. Create the JWT payload
+    const payload = { userId, username }
 
-    const { hfValue, maxTokens } = models[model]
+    // 2. Sign the token
+    const token = sign(payload, JWT_SECRET!, { expiresIn: JWT_EXPIRY })
 
-    reply.raw.writeHead(200, {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-      Connection: 'keep-alive',
+    // 3. Set the JWT as an HTTP-only cookie
+    reply.setCookie('auth_token', token, {
+      httpOnly: true,
+      secure: isProduction,
+      maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
+      path: '/',
     })
 
-    const response = await fetch(
-      'https://router.huggingface.co/v1/chat/completions',
-      {
-        headers: {
-          Authorization: `Bearer ${HF_TOKEN}`,
-          'Content-Type': 'application/json',
-        },
-        method: 'POST',
-        body: JSON.stringify({
-          model: hfValue,
-          messages,
-          stream: true,
-          max_tokens: maxTokens,
-        }),
-      },
-    )
+    app.log.info(`User logged in: ${username} (via JWT)`)
+    return reply.redirect('/')
+  }
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
+  // Authentication failed
+  reply.view('login.hbs', {
+    title: 'Beet - Ultra lightweight AI chat',
+    errorMessage: 'Invalid username or password.',
+  })
+})
+
+// POST /logout (Handle logout)
+app.post('/logout', async (req, reply) => {
+  // Clear the JWT cookie (stateless logout)
+  reply.clearCookie('auth_token')
+
+  app.log.info('User logged out.')
+  // Use HTMX to perform a client-side redirect back to the home page
+  reply.header('HX-Redirect', '/')
+  return reply.status(204).send()
+})
+
+app.post(
+  '/initial-ask',
+  { preHandler: optionalVerifyJWT },
+  async (req, reply) => {
+    const { 'chat-question': question, model } = req.body as {
+      'chat-question': string
+      model: string
     }
 
-    if (!response.body) {
-      reply.raw.end()
-      return
-    }
-
-    const reader = response.body.getReader()
-    const decoder = new TextDecoder()
-    let fullResponse = ''
+    const streamId = crypto.randomUUID()
 
     try {
-      while (true) {
-        const { done, value } = await reader.read()
+      const chatKey = `chat:${streamId}`
+      const messagesKey = `messages:${streamId}`
 
-        if (done) {
-          break
-        }
+      // 1. Store the chat metadata in a Hash
+      await app.redis.hSet(chatKey, {
+        model: model,
+        createdAt: new Date().toISOString(),
+        // sessionId: req.session.sessionId,
+        userId: req.userId,
+        title: question.slice(0, 15),
+      })
 
-        const chunk = decoder.decode(value)
-        const lines = chunk.split('\n')
+      // 2. Store the first user message in a List
+      const firstMessage = JSON.stringify({
+        role: 'user',
+        content: question,
+      })
+      await app.redis.rPush(messagesKey, firstMessage)
 
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6).trim()
+      // 3. Associate chat with user
+      const userChatsKey = getChatKeyPrefix(req) + ':chats' // <--- USES FALLBACK LOGIC
+      await app.redis.rPush(userChatsKey, streamId)
 
-            if (data === '[DONE]') {
-              console.log('\n✨ Stream complete!')
+      app.log.info(
+        `Started new chat: ${chatKey} (${req.userId ? 'user' : 'session'} ${req.userId || req.session.sessionId})`,
+      )
+    } catch (err) {
+      app.log.error('Failed to save initial chat to Redis', err)
+    }
 
-              // save full response to DB
-              const assistantMessage = JSON.stringify({
-                role: 'assistant',
-                content: fullResponse,
-              })
+    const modelGroups = createModelGroups(models, model)
 
-              await app.redis.rPush(messagesKey, assistantMessage)
-              app.log.info(`Saved assistant response to ${messagesKey}`)
+    return reply.view('partials/chat.hbs', {
+      id: streamId,
+      model,
+      question,
+      user: { username: req.username },
+      modelGroups,
+    })
+  },
+)
 
-              // Ensure the stream is closed properly
-              if (!reply.raw.writableEnded) {
-                reply.raw.write('event: close\ndata: done\n\n')
-                reply.raw.end()
+app.post(
+  '/new-ask/:id',
+  { preHandler: optionalVerifyJWT }, // do we need this here?
+  async (req, reply) => {
+    const { id } = req.params as { id: string }
+    const { 'chat-question': question, model } = req.body as {
+      'chat-question': string
+      model: string
+    }
+
+    const messagesKey = `messages:${id}`
+
+    try {
+      // Save the new user prompt to the Redis list
+      const userMessage = JSON.stringify({
+        role: 'user',
+        content: question,
+      })
+      await app.redis.rPush(messagesKey, userMessage)
+      app.log.info(`Saved new prompt to ${messagesKey}`)
+
+      // Get the model from the chat metadata
+      const chatData = await app.redis.hGetAll(`chat:${id}`)
+
+      if (chatData.model !== model) {
+        // the model has changed, update it.
+        await app.redis.hSet(`chat:${id}`, 'model', model)
+      }
+
+      // Respond with a partial that will trigger the stream
+      return reply.view('partials/chat-bubbles.hbs', {
+        id: id,
+        model,
+        question: question,
+      })
+    } catch (err) {
+      app.log.error('Failed to save new prompt to Redis', err)
+    }
+  },
+)
+
+app.get(
+  '/stream/:id/:model',
+  { preHandler: optionalVerifyJWT }, // do we need this here?
+  async (req, reply) => {
+    const { id, model } = req.params as {
+      id: string
+      model: string
+    }
+
+    const messagesKey = `messages:${id}`
+
+    try {
+      const historyStrings = await app.redis.lRange(messagesKey, 0, -1)
+      const messages = historyStrings.map((msg) => JSON.parse(msg))
+
+      const { hfValue, maxTokens } = models[model]
+
+      reply.raw.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        Connection: 'keep-alive',
+      })
+
+      const response = await fetch(
+        'https://router.huggingface.co/v1/chat/completions',
+        {
+          headers: {
+            Authorization: `Bearer ${HF_TOKEN}`,
+            'Content-Type': 'application/json',
+          },
+          method: 'POST',
+          body: JSON.stringify({
+            model: hfValue,
+            messages,
+            stream: true,
+            max_tokens: maxTokens,
+          }),
+        },
+      )
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      if (!response.body) {
+        reply.raw.end()
+        return
+      }
+
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let fullResponse = ''
+
+      try {
+        while (true) {
+          const { done, value } = await reader.read()
+
+          if (done) {
+            break
+          }
+
+          const chunk = decoder.decode(value)
+          const lines = chunk.split('\n')
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6).trim()
+
+              if (data === '[DONE]') {
+                console.log('\n✨ Stream complete!')
+
+                // save full response to DB
+                const assistantMessage = JSON.stringify({
+                  role: 'assistant',
+                  content: fullResponse,
+                })
+
+                await app.redis.rPush(messagesKey, assistantMessage)
+                app.log.info(`Saved assistant response to ${messagesKey}`)
+
+                // Ensure the stream is closed properly
+                if (!reply.raw.writableEnded) {
+                  reply.raw.write('event: close\ndata: done\n\n')
+                  reply.raw.end()
+                }
+                return
               }
-              return
-            }
 
-            try {
-              const parsed = JSON.parse(data)
-              const content = parsed.choices?.[0]?.delta?.content
+              try {
+                const parsed = JSON.parse(data)
+                const content = parsed.choices?.[0]?.delta?.content
 
-              if (content) {
-                fullResponse += content
-                process.stdout.write(content)
+                if (content) {
+                  fullResponse += content
+                  process.stdout.write(content)
 
-                // stream content to client
-                const formattedContent = content.replace(/\n/g, '<br>')
-                reply.raw.write(`data: ${formattedContent}\n\n`)
+                  // stream content to client
+                  const formattedContent = content.replace(/\n/g, '<br>')
+                  reply.raw.write(`data: ${formattedContent}\n\n`)
+                }
+              } catch (e) {
+                // Silently ignore JSON parse errors
+                continue
               }
-            } catch (e) {
-              // Silently ignore JSON parse errors
-              continue
             }
           }
         }
+      } finally {
+        reader.releaseLock()
       }
-    } finally {
-      reader.releaseLock()
+    } catch (err) {
+      app.log.error('Error in stream route', err)
+      if (!reply.raw.writableEnded) {
+        reply.raw.end()
+      }
     }
-  } catch (err) {
-    app.log.error('Error in stream route', err)
-    if (!reply.raw.writableEnded) {
-      reply.raw.end()
-    }
-  }
-})
+  },
+)
 
 app.get('/new-chat', (req, reply) => {
   const modelGroups = createModelGroups(models)
   reply.view('partials/ask-form.hbs', { modelGroups })
 })
 
-app.get('/chat-history', async (req, reply) => {
-  const sessionChatsKey = `session:${req.session.sessionId}:chats`
-  const chatIds = await app.redis.lRange(sessionChatsKey, 0, -1)
+app.get(
+  '/chat-history',
+  { preHandler: optionalVerifyJWT },
+  async (req, reply) => {
+    // const sessionChatsKey = `session:${req.session.sessionId}:chats`
+    const sessionChatsKey = getChatKeyPrefix(req) + ':chats'
+    const chatIds = await app.redis.lRange(sessionChatsKey, 0, -1)
 
-  const chats = []
-  for (const id of chatIds) {
-    const chatData = await app.redis.hGetAll(`chat:${id}`)
-    chats.push({ id, ...chatData })
-  }
-  console.log('chats', chats)
+    const chats = []
+    for (const id of chatIds) {
+      const chatData = await app.redis.hGetAll(`chat:${id}`)
+      chats.push({ id, ...chatData })
+    }
+    console.log('chats', chats)
 
-  return reply.view('partials/chat-list.hbs', { chats })
-})
+    return reply.view('partials/chat-list.hbs', { chats })
+  },
+)
 
 app.get('/login-form', (req, reply) => {
   reply.view('partials/login-form.hbs')
@@ -326,6 +470,17 @@ app.get('/chat/:id', async (req, reply) => {
   })
 
   const modelGroups = createModelGroups(models, chatMeta.model)
+
+  console.log('modelGroups', modelGroups)
+
+  if (!chatMeta.model) {
+    return reply.view('partials/existing-chat.hbs', {
+      id,
+      model: 'gpt-3.5-turbo',
+      messages: parsedMessages,
+      modelGroups,
+    })
+  }
 
   return reply.view('partials/existing-chat.hbs', {
     id,
