@@ -283,7 +283,7 @@ app.post('/register', async (req, reply) => {
 
 // SECURED ROUTE (Logout)
 app.post('/logout', { preHandler: optionalVerifyJWT }, async (req, reply) => {
-  // 1. Clear the JWT cookie (stateless logout)
+  // Clear the JWT cookie (stateless logout)
   reply.clearCookie('auth_token', {
     httpOnly: true,
     secure: isProduction,
@@ -292,11 +292,7 @@ app.post('/logout', { preHandler: optionalVerifyJWT }, async (req, reply) => {
 
   app.log.info('User logged out.')
 
-  const user = undefined // Ensure the 'user' object is not present in the context
-
-  reply.header('HX-Retarget', '#drawer') // Target the drawer
-
-  return reply.view('partials/drawer-content.hbs', { user })
+  return reply.redirect('/login')
 })
 
 app.post(

@@ -20,7 +20,7 @@
   {{> new-chat-button}}
 
   {{#if user}}
-    <form hx-post='/logout' hx-target='#drawer' hx-swap='innerHTML' style="padding: 1rem;">
+    <form hx-post='/logout' hx-target='body' hx-swap='innerHTML' style="padding: 1rem;">
       <button type='submit' class='secondary outline small-button'>
         Logout
       </button>
