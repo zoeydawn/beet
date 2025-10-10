@@ -1,0 +1,23 @@
+<html lang='en'>
+  <head>
+    <meta charset='utf-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1' />
+    <link rel='stylesheet' href='static/pico.fuchsia.min.css' />
+    <link rel='stylesheet' href='static/style.css' />
+    <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.7/dist/htmx.min.js"></script>
+    <title>Register - {{title}}</title>
+  </head>
+  <body>
+    <main id='login-container' class='container'>
+	<div class="top-link">
+            <a class='internal-link back-button' href='/'>« Back to chat</a>
+	</div>
+        <article id='login-form'>
+		{{> create-account-form }}
+        </article>
+    </main>
+
+    {{> footer}}
+
+  </body>
+</html>

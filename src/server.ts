@@ -157,6 +157,10 @@ app.get('/login', (req, reply) => {
   reply.view('login.hbs')
 })
 
+app.get('/register', (req, reply) => {
+  reply.view('register.hbs')
+})
+
 app.post('/login', async (req, reply) => {
   const { username, password } = req.body as any
   const userId = username.toLowerCase()
@@ -212,7 +216,7 @@ app.post('/register', async (req, reply) => {
 
   // 1. Validation (Basic checks)
   if (!username || !password || !confirmPassword) {
-    return reply.view('login.hbs', {
+    return reply.view('register.hbs', {
       // Render the login page which contains the form
       title: 'Beet - Ultra lightweight AI chat',
       errorMessage: 'All fields are required.',
@@ -220,7 +224,7 @@ app.post('/register', async (req, reply) => {
   }
 
   if (password !== confirmPassword) {
-    return reply.view('login.hbs', {
+    return reply.view('register.hbs', {
       title: 'Beet - Ultra lightweight AI chat',
       errorMessage: 'Passwords do not match.',
     })
@@ -233,7 +237,7 @@ app.post('/register', async (req, reply) => {
   const existingUser = await app.redis.hGetAll(userKey)
 
   if (Object.keys(existingUser).length > 0) {
-    return reply.view('login.hbs', {
+    return reply.view('register.hbs', {
       title: 'Beet - Ultra lightweight AI chat',
       errorMessage: 'Username already taken.',
     })
