@@ -239,6 +239,11 @@
   gap: 8px;
 }
 
+.small-button {
+  font-size: 12px;
+  padding: 8px 10px;
+}
+
 #login-container {
   max-width: 700px;
   margin-top: 1rem;

@@ -5,13 +5,35 @@
   hx-target='.chat-list'
   hx-trigger='revealed'
 >
-  {{> login-button }}
+
+    <div class="user-auth-area">
+
+      {{#if user}}
+        <a
+          class='internal-link login-button'
+          href='#'
+        >
+          {{> user-icon }}
+          {{user.username}}
+        </a>
+      {{else}}
+       {{> login-button }}
+       {{/if}}
+    </div>
 
   <ul class='chat-list'>
     <li>Loading chats...</li>
   </ul>
 
   {{> new-chat-button}}
+
+  {{#if user}}
+    <form hx-post='/logout' hx-target='#drawer' hx-swap='outerHTML' style="padding: 1rem;">
+      <button type='submit' class='secondary outline small-button'>
+        Logout
+      </button>
+    </form>
+  {{/if}}
 
   <a class='internal-link' id='menu-close-btn'>«</a>
 </nav>
