@@ -10,6 +10,8 @@ export type ModelsObject = {
   [key: string]: Model
 }
 
+export const defaultModel = 'gpt-oss-20b'
+
 export const models: ModelsObject = {
   'gpt-oss-20b': {
     value: 'gpt-oss-20b',
@@ -64,7 +66,8 @@ export const models: ModelsObject = {
 
 export function createModelGroups(
   models: ModelsObject,
-  selectedModelKey = 'gpt-oss-20b',
+  selectedModelKey = defaultModel,
+  isPremiumUser = false,
 ) {
   const basicModels: Model[] = []
   const premiumModels: Model[] = []
@@ -74,6 +77,7 @@ export function createModelGroups(
     const modelWithSelection = {
       ...model,
       selected: key === selectedModelKey,
+      disabled: !isPremiumUser && model.isPremium,
     }
 
     if (model.isPremium) {

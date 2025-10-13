@@ -25,7 +25,7 @@ const SESSION_SECRET = process.env.SESSION_SECRET
 const USER_KEY_PREFIX = 'user:'
 
 import redisPlugin from './plugins/redis.ts'
-import { models, createModelGroups } from './utils/models.ts'
+import { models, createModelGroups, defaultModel } from './utils/models.ts'
 
 // Check for required secrets
 if (!JWT_SECRET) {
@@ -38,11 +38,16 @@ if (!SESSION_SECRET) {
   process.exit(1)
 }
 
+// heleper functions
+const getIsPremiumUser = (req: FastifyRequest) =>
+  !!req.userId && !!req.isPremium
+
 // include user data extracted from JWT
 declare module 'fastify' {
   interface FastifyRequest {
     userId?: string
     username?: string
+    isPremium?: boolean
   }
 }
 
@@ -119,6 +124,13 @@ const optionalVerifyJWT = async (req: FastifyRequest, reply: FastifyReply) => {
     // Attach user data to the request object
     req.userId = decoded.userId
     req.username = decoded.username
+
+    // Fetch user details from Redis to get the premium flag
+    const userKey = `${USER_KEY_PREFIX}${decoded.userId}` // userId is like 'user-zoey'
+    const userProfile = await app.redis.hGetAll(userKey)
+
+    // Attach premium status (Convert 'true'/'false' string from Redis to boolean)
+    req.isPremium = userProfile.premium === 'true'
   } catch (err) {
     app.log.warn('Invalid or expired token. Clearing cookie.')
     // Clear the bad token but allow the request to proceed as anonymous
@@ -142,7 +154,8 @@ const getChatKeyPrefix = (req: FastifyRequest) => {
 app.get('/', { preHandler: optionalVerifyJWT }, (req, reply) => {
   console.log('GET / called')
 
-  const modelGroups = createModelGroups(models)
+  const isPremiumUser = getIsPremiumUser(req)
+  const modelGroups = createModelGroups(models, undefined, isPremiumUser)
   // Pass user data if logged in
   const user = req.userId ? { username: req.username } : null
 
@@ -254,11 +267,12 @@ app.post('/register', async (req, reply) => {
       username: username, // Save original casing for display
       passwordHash: hashedPassword,
       createdAt: new Date().toISOString(),
+      premium: 'true',
     })
     app.log.info(`New user registered: ${username}`)
   } catch (err) {
     app.log.error('Failed to save new user to Redis', err)
-    return reply.view('login.hbs', {
+    return reply.view('register.hbs', {
       title: 'Beet - Ultra lightweight AI chat',
       errorMessage: 'Account creation failed due to a server error.',
     })
@@ -337,7 +351,9 @@ app.post(
     } catch (err) {
       app.log.error('Failed to save initial chat to Redis', err)
     }
-    const modelGroups = createModelGroups(models, model)
+
+    const isPremiumUser = getIsPremiumUser(req)
+    const modelGroups = createModelGroups(models, model, isPremiumUser)
 
     return reply.view('partials/chat.hbs', {
       id: streamId,
@@ -361,6 +377,8 @@ app.post(
 
     const messagesKey = `messages:${id}`
 
+    let usedModel = model
+
     try {
       // Save the new user prompt to the Redis list
       const userMessage = JSON.stringify({
@@ -373,7 +391,16 @@ app.post(
       // Get the model from the chat metadata
       const chatData = await app.redis.hGetAll(`chat:${id}`)
 
-      if (chatData.model !== model) {
+      // ⚠️ PREVENT PREMIUM MODEL UPGRADE FOR NON-PREMIUM USERS
+      const isPremiumUser = getIsPremiumUser(req)
+      const selectedModel = models[model]
+
+      if (selectedModel.isPremium && !isPremiumUser) {
+        // If a non-premium user somehow selected a premium model, we must prevent it.
+        // We will ignore the selected model and force the chat to continue with default model.
+        usedModel = defaultModel
+        await app.redis.hSet(`chat:${id}`, 'model', defaultModel)
+      } else if (chatData.model !== model) {
         // the model has changed, update it.
         await app.redis.hSet(`chat:${id}`, 'model', model)
       }
@@ -381,7 +408,7 @@ app.post(
       // Respond with a partial that will trigger the stream
       return reply.view('partials/chat-bubbles.hbs', {
         id: id,
-        model,
+        model: usedModel,
         question: question,
       })
     } catch (err) {
@@ -398,6 +425,8 @@ app.get(
       id: string
       model: string
     }
+
+    // TODO: make sure unorthorized users can't call premium models
 
     const messagesKey = `messages:${id}`
 
@@ -509,8 +538,10 @@ app.get(
   },
 )
 
-app.get('/new-chat', (req, reply) => {
-  const modelGroups = createModelGroups(models)
+app.get('/new-chat', { preHandler: optionalVerifyJWT }, (req, reply) => {
+  const isPremiumUser = getIsPremiumUser(req)
+  const modelGroups = createModelGroups(models, undefined, isPremiumUser)
+
   reply.view('partials/ask-form.hbs', { modelGroups })
 })
 
@@ -541,7 +572,7 @@ app.get('/create-account-form', (req, reply) => {
   reply.view('partials/create-account-form.hbs')
 })
 
-app.get('/chat/:id', async (req, reply) => {
+app.get('/chat/:id', { preHandler: optionalVerifyJWT }, async (req, reply) => {
   const { id } = req.params as { id: string }
 
   const chatKey = `chat:${id}`
@@ -560,22 +591,14 @@ app.get('/chat/:id', async (req, reply) => {
     return msg
   })
 
-  const modelGroups = createModelGroups(models, chatMeta.model)
+  // TODO: make sure a users isn't trying to access someone else's chat
 
-  console.log('modelGroups', modelGroups)
-
-  if (!chatMeta.model) {
-    return reply.view('partials/existing-chat.hbs', {
-      id,
-      model: 'gpt-3.5-turbo',
-      messages: parsedMessages,
-      modelGroups,
-    })
-  }
+  const isPremiumUser = getIsPremiumUser(req)
+  const modelGroups = createModelGroups(models, chatMeta.model, isPremiumUser)
 
   return reply.view('partials/existing-chat.hbs', {
     id,
-    model: chatMeta.model,
+    model: chatMeta.model || defaultModel,
     messages: parsedMessages,
     modelGroups,
   })
