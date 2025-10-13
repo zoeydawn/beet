@@ -421,12 +421,22 @@ app.get(
   '/stream/:id/:model',
   { preHandler: optionalVerifyJWT }, // do we need this here?
   async (req, reply) => {
-    const { id, model } = req.params as {
+    const { id, model: selectedModelKey } = req.params as {
       id: string
       model: string
     }
 
-    // TODO: make sure unorthorized users can't call premium models
+    let model = selectedModelKey
+
+    // Make sure unorthorized users can't call premium models
+    const isPremiumUser = getIsPremiumUser(req)
+    const selectedModel = models[model]
+
+    if (selectedModel.isPremium && !isPremiumUser) {
+      // If a non-premium user somehow selected a premium model, we must prevent it.
+      // We will ignore the selected model and force the chat to continue with default model.
+      model = defaultModel
+    }
 
     const messagesKey = `messages:${id}`
 
