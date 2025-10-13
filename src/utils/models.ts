@@ -12,6 +12,8 @@ export type ModelsObject = {
 
 export const defaultModel = 'gpt-oss-20b'
 
+export const defaultPremiumModel = 'gpt-oss-120b'
+
 export const models: ModelsObject = {
   'gpt-oss-20b': {
     value: 'gpt-oss-20b',
@@ -66,17 +68,23 @@ export const models: ModelsObject = {
 
 export function createModelGroups(
   models: ModelsObject,
-  selectedModelKey = defaultModel,
+  selectedModelKey?: string,
   isPremiumUser = false,
 ) {
   const basicModels: Model[] = []
   const premiumModels: Model[] = []
 
+  const selectedModel = selectedModelKey
+    ? selectedModelKey
+    : isPremiumUser
+      ? defaultPremiumModel
+      : defaultModel
+
   // Sort models into basic and premium arrays
   Object.entries(models).forEach(([key, model]) => {
     const modelWithSelection = {
       ...model,
-      selected: key === selectedModelKey,
+      selected: key === selectedModel,
       disabled: !isPremiumUser && model.isPremium,
     }
 
@@ -86,6 +94,20 @@ export function createModelGroups(
       basicModels.push(modelWithSelection)
     }
   })
+
+  // display premium models first for premium users
+  if (isPremiumUser) {
+    return [
+      {
+        groupName: 'Premium models',
+        models: premiumModels,
+      },
+      {
+        groupName: 'Basic models',
+        models: basicModels,
+      },
+    ]
+  }
 
   return [
     {
