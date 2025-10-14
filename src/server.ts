@@ -9,7 +9,7 @@ import formBody from '@fastify/formbody'
 import session from '@fastify/session'
 import cookie from '@fastify/cookie'
 import * as bcrypt from 'bcryptjs'
-// import rateLimit from '@fastify/rate-limit'
+import rateLimit from '@fastify/rate-limit'
 import { marked } from 'marked'
 import jwt from 'jsonwebtoken'
 const { sign, verify } = jwt
@@ -96,8 +96,14 @@ handlebars.registerHelper('eq', (a: any, b: any) => a === b)
 // handlebars.registerHelper('isLoggedIn', (req: any) => !!req.userId)
 handlebars.registerHelper('isLoggedIn', (context: any) => !!context.user)
 
-// TODO: configure rate limit
-// app.register(rateLimit, { max: 100, timeWindow: '15 minutes' })
+// Rate limit
+app.register(rateLimit, {
+  global: true,
+  max: 100, // Global limit: 100 requests every 15 minutes
+  timeWindow: '15 minutes',
+  // Key generator to apply the limit based on user ID if logged in, or IP if anonymous.
+  keyGenerator: (req) => req.userId || req.ip,
+})
 
 // --- UTILITY FUNCTIONS ---
 
@@ -431,7 +437,19 @@ app.post(
 
 app.get(
   '/stream/:id/:model',
-  { preHandler: optionalVerifyJWT }, // do we need this here?
+  {
+    preHandler: optionalVerifyJWT,
+    config: {
+      rateLimit: {
+        max: 5, // Max 5 streams
+        timeWindow: '1 minute', // per minute
+        // Since this route is resource heavy, we'll use a very strict key generator
+        keyGenerator: (req) => req.userId || req.ip,
+        // You can customize the error message if needed
+        hook: 'onRequest',
+      },
+    },
+  },
   async (req, reply) => {
     const { id, model: selectedModelKey } = req.params as {
       id: string
