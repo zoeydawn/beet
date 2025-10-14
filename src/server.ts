@@ -313,12 +313,24 @@ app.post(
   '/initial-ask',
   { preHandler: optionalVerifyJWT },
   async (req, reply) => {
-    const { 'chat-question': question, model } = req.body as {
-      'chat-question': string
-      model: string
-    }
+    const { 'chat-question': question, model: userSelectedModel } =
+      req.body as {
+        'chat-question': string
+        model: string
+      }
+
+    let model = userSelectedModel
 
     const streamId = crypto.randomUUID()
+
+    const isPremiumUser = getIsPremiumUser(req)
+
+    // ⚠️ PREVENT PREMIUM MODEL UPGRADE FOR NON-PREMIUM USERS
+    const selectedModel = models[model]
+
+    if (selectedModel.isPremium && !isPremiumUser) {
+      model = defaultModel
+    }
 
     try {
       const chatKey = `chat:${streamId}`
@@ -352,7 +364,6 @@ app.post(
       app.log.error('Failed to save initial chat to Redis', err)
     }
 
-    const isPremiumUser = getIsPremiumUser(req)
     const modelGroups = createModelGroups(models, model, isPremiumUser)
 
     return reply.view('partials/chat.hbs', {
@@ -370,14 +381,15 @@ app.post(
   { preHandler: optionalVerifyJWT }, // do we need this here?
   async (req, reply) => {
     const { id } = req.params as { id: string }
-    const { 'chat-question': question, model } = req.body as {
-      'chat-question': string
-      model: string
-    }
+    const { 'chat-question': question, model: userSelectedModel } =
+      req.body as {
+        'chat-question': string
+        model: string
+      }
 
     const messagesKey = `messages:${id}`
 
-    let usedModel = model
+    let model = userSelectedModel
 
     try {
       // Save the new user prompt to the Redis list
@@ -398,7 +410,7 @@ app.post(
       if (selectedModel.isPremium && !isPremiumUser) {
         // If a non-premium user somehow selected a premium model, we must prevent it.
         // We will ignore the selected model and force the chat to continue with default model.
-        usedModel = defaultModel
+        model = defaultModel
         await app.redis.hSet(`chat:${id}`, 'model', defaultModel)
       } else if (chatData.model !== model) {
         // the model has changed, update it.
@@ -408,7 +420,7 @@ app.post(
       // Respond with a partial that will trigger the stream
       return reply.view('partials/chat-bubbles.hbs', {
         id: id,
-        model: usedModel,
+        model,
         question: question,
       })
     } catch (err) {
