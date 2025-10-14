@@ -102,7 +102,7 @@ app.register(rateLimit, {
   max: 100, // Global limit: 100 requests every 15 minutes
   timeWindow: '15 minutes',
   // Key generator to apply the limit based on user ID if logged in, or IP if anonymous.
-  keyGenerator: (req) => req.userId || req.ip,
+  keyGenerator: (req) => req.userId || req.session.sessionId,
 })
 
 // --- UTILITY FUNCTIONS ---
@@ -443,10 +443,8 @@ app.get(
       rateLimit: {
         max: 5, // Max 5 streams
         timeWindow: '1 minute', // per minute
-        // Since this route is resource heavy, we'll use a very strict key generator
-        keyGenerator: (req) => req.userId || req.ip,
-        // You can customize the error message if needed
-        hook: 'onRequest',
+        keyGenerator: (req) => req.userId || req.session.sessionId,
+        hook: 'preHandler',
       },
     },
   },
