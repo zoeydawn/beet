@@ -7,7 +7,7 @@
       {{#if errorMessage}}
         <p aria-invalid='true' role='alert'>{{errorMessage}}</p>
       {{/if}}
-      {{csrfField}}
+      {{> csrf-field}}
       <input
         type='text'
         name='username'

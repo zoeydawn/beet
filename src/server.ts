@@ -125,17 +125,17 @@ app.register(rateLimit, {
   keyGenerator: (req) => req.userId || req.session.sessionId,
 })
 
-handlebars.registerHelper('eq', (a: any, b: any) => a === b)
-handlebars.registerHelper('isLoggedIn', (context: any) => !!context.user)
-// NEW HELPER: Get CSRF token for forms
-handlebars.registerHelper('csrfField', function () {
-  // 'this' inside the helper is the view context, which contains the 'reply' object
-  // reply.csrfToken() generates the token and sets the necessary cookie/session secret
-  const token = this.reply.csrfToken()
-  return new handlebars.SafeString(
-    `<input type="hidden" name="_csrf" value="${token}">`,
-  )
-})
+// handlebars.registerHelper('eq', (a: any, b: any) => a === b)
+// handlebars.registerHelper('isLoggedIn', (context: any) => !!context.user)
+// // NEW HELPER: Get CSRF token for forms
+// handlebars.registerHelper('csrfField', function () {
+//   // 'this' inside the helper is the view context, which contains the 'reply' object
+//   // reply.csrfToken() generates the token and sets the necessary cookie/session secret
+//   const token = this.reply.csrfToken()
+//   return new handlebars.SafeString(
+//     `<input type="hidden" name="_csrf" value="${token}">`,
+//   )
+// })
 
 // --- UTILITY FUNCTIONS ---
 
@@ -205,11 +205,13 @@ app.get('/', { preHandler: optionalVerifyJWT }, (req, reply) => {
 })
 
 app.get('/login', (req, reply) => {
-  reply.view('login.hbs')
+  const csrfToken = reply.generateCsrf()
+  reply.view('login.hbs', { csrfToken })
 })
 
 app.get('/register', (req, reply) => {
-  reply.view('register.hbs')
+  const csrfToken = reply.generateCsrf() // <--- NEW: Generate token
+  reply.view('register.hbs', { csrfToken })
 })
 
 app.post('/login', async (req, reply) => {
@@ -218,6 +220,7 @@ app.post('/login', async (req, reply) => {
   const userKey = `${USER_KEY_PREFIX}${userId}`
 
   const existingUser = await app.redis.hGetAll(userKey)
+  const csrfToken = reply.generateCsrf()
 
   // 1. Check if user exists
   if (Object.keys(existingUser).length === 0) {
@@ -225,6 +228,7 @@ app.post('/login', async (req, reply) => {
     return reply.view('login.hbs', {
       title: 'Beet - Ultra lightweight AI chat',
       errorMessage: 'Invalid username or password.',
+      csrfToken,
     })
   }
 
@@ -251,6 +255,7 @@ app.post('/login', async (req, reply) => {
   reply.view('login.hbs', {
     title: 'Beet - Ultra lightweight AI chat',
     errorMessage: 'Invalid username or password.',
+    csrfToken,
   })
 })
 
@@ -264,6 +269,7 @@ app.post('/register', async (req, reply) => {
     password,
     'confirm-password': confirmPassword, // Destructure with a clean name
   } = req.body as any
+  const csrfToken = reply.generateCsrf()
 
   // 1. Validation (Basic checks)
   if (!username || !password || !confirmPassword) {
@@ -271,6 +277,7 @@ app.post('/register', async (req, reply) => {
       // Render the login page which contains the form
       title: 'Beet - Ultra lightweight AI chat',
       errorMessage: 'All fields are required.',
+      csrfToken,
     })
   }
 
@@ -278,6 +285,7 @@ app.post('/register', async (req, reply) => {
     return reply.view('register.hbs', {
       title: 'Beet - Ultra lightweight AI chat',
       errorMessage: 'Passwords do not match.',
+      csrfToken,
     })
   }
 
@@ -291,6 +299,7 @@ app.post('/register', async (req, reply) => {
     return reply.view('register.hbs', {
       title: 'Beet - Ultra lightweight AI chat',
       errorMessage: 'Username already taken.',
+      csrfToken,
     })
   }
 
@@ -313,6 +322,7 @@ app.post('/register', async (req, reply) => {
     return reply.view('register.hbs', {
       title: 'Beet - Ultra lightweight AI chat',
       errorMessage: 'Account creation failed due to a server error.',
+      csrfToken,
     })
   }
 
