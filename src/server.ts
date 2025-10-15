@@ -10,6 +10,11 @@ import session from '@fastify/session'
 import cookie from '@fastify/cookie'
 import * as bcrypt from 'bcryptjs'
 import rateLimit from '@fastify/rate-limit'
+
+import helmet from '@fastify/helmet'
+import cors from '@fastify/cors'
+import csrfProtection from '@fastify/csrf-protection'
+
 import { marked } from 'marked'
 import jwt from 'jsonwebtoken'
 const { sign, verify } = jwt
@@ -23,6 +28,7 @@ const JWT_SECRET = process.env.JWT_SECRET
 const JWT_EXPIRY = '7d' // token expiry time // TODO: update this
 const SESSION_SECRET = process.env.SESSION_SECRET
 const USER_KEY_PREFIX = 'user:'
+const productionUrl = 'https://beet.zoey.ninja'
 
 import redisPlugin from './plugins/redis.ts'
 import { models, createModelGroups, defaultModel } from './utils/models.ts'
@@ -92,9 +98,23 @@ app.register(session, {
 })
 
 // register helpers
-handlebars.registerHelper('eq', (a: any, b: any) => a === b)
-// handlebars.registerHelper('isLoggedIn', (req: any) => !!req.userId)
-handlebars.registerHelper('isLoggedIn', (context: any) => !!context.user)
+// HELMET: Sets essential security headers globally
+app.register(helmet) // Use default configuration for best coverage
+
+// CORS: Allows requests from other origins (crucial if running FE/BE on different ports, e.g., during dev)
+app.register(cors, {
+  // Allows any origin in development, should be restricted to your domain(s) in production
+  origin: isProduction ? [productionUrl] : true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allowed methods
+  credentials: true, // IMPORTANT: Allows cookies (JWT/Session) to be sent cross-origin
+})
+
+// CSRF: Protects against Cross-Site Request Forgery (must be after session/cookie)
+app.register(csrfProtection, {
+  // Since we re-enabled the session plugin, we can use it for CSRF secret storage.
+  sessionPlugin: '@fastify/session',
+  // The CSRF token will be available via reply.csrfToken for the views.
+})
 
 // Rate limit
 app.register(rateLimit, {
@@ -103,6 +123,18 @@ app.register(rateLimit, {
   timeWindow: '15 minutes',
   // Key generator to apply the limit based on user ID if logged in, or IP if anonymous.
   keyGenerator: (req) => req.userId || req.session.sessionId,
+})
+
+handlebars.registerHelper('eq', (a: any, b: any) => a === b)
+handlebars.registerHelper('isLoggedIn', (context: any) => !!context.user)
+// NEW HELPER: Get CSRF token for forms
+handlebars.registerHelper('csrfField', function () {
+  // 'this' inside the helper is the view context, which contains the 'reply' object
+  // reply.csrfToken() generates the token and sets the necessary cookie/session secret
+  const token = this.reply.csrfToken()
+  return new handlebars.SafeString(
+    `<input type="hidden" name="_csrf" value="${token}">`,
+  )
 })
 
 // --- UTILITY FUNCTIONS ---
@@ -384,7 +416,7 @@ app.post(
 
 app.post(
   '/new-ask/:id',
-  { preHandler: optionalVerifyJWT }, // do we need this here?
+  { preHandler: optionalVerifyJWT },
   async (req, reply) => {
     const { id } = req.params as { id: string }
     const { 'chat-question': question, model: userSelectedModel } =
