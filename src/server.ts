@@ -317,7 +317,7 @@ app.post('/register', async (req, reply) => {
       username: username, // Save original casing for display
       passwordHash: hashedPassword,
       createdAt: new Date().toISOString(),
-      premium: 'true',
+      premium: 'false',
     })
     app.log.info(`New user registered: ${username}`)
   } catch (err) {
