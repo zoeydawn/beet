@@ -28,7 +28,7 @@ const JWT_SECRET = process.env.JWT_SECRET
 const JWT_EXPIRY = '7d' // token expiry time // TODO: update this
 const SESSION_SECRET = process.env.SESSION_SECRET
 const USER_KEY_PREFIX = 'user:'
-const productionUrl = 'https://beet.zoey.ninja'
+const productionUrl = process.env.PRODUCTION_URL || 'https://beet.zoey.ninja'
 
 import redisPlugin from './plugins/redis.ts'
 import { models, createModelGroups, defaultModel } from './utils/models.ts'
