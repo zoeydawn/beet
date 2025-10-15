@@ -137,17 +137,8 @@ app.register(rateLimit, {
   keyGenerator: (req) => req.userId || req.session.sessionId,
 })
 
-// handlebars.registerHelper('eq', (a: any, b: any) => a === b)
-// handlebars.registerHelper('isLoggedIn', (context: any) => !!context.user)
-// // NEW HELPER: Get CSRF token for forms
-// handlebars.registerHelper('csrfField', function () {
-//   // 'this' inside the helper is the view context, which contains the 'reply' object
-//   // reply.csrfToken() generates the token and sets the necessary cookie/session secret
-//   const token = this.reply.csrfToken()
-//   return new handlebars.SafeString(
-//     `<input type="hidden" name="_csrf" value="${token}">`,
-//   )
-// })
+handlebars.registerHelper('eq', (a: any, b: any) => a === b)
+handlebars.registerHelper('isLoggedIn', (context: any) => !!context.user)
 
 // --- UTILITY FUNCTIONS ---
 
@@ -683,7 +674,7 @@ app.get('/chat/:id', { preHandler: optionalVerifyJWT }, async (req, reply) => {
     return msg
   })
 
-  // TODO: make sure a users isn't trying to access someone else's chat
+  // TODO: make sure a user isn't trying to access someone else's chat
 
   const isPremiumUser = getIsPremiumUser(req)
   const modelGroups = createModelGroups(models, chatMeta.model, isPremiumUser)
