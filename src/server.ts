@@ -98,8 +98,20 @@ app.register(session, {
 })
 
 // register helpers
+
 // HELMET: Sets essential security headers globally
-app.register(helmet) // Use default configuration for best coverage
+app.register(helmet, {
+  contentSecurityPolicy: {
+    directives: {
+      // Default sources: only allow scripts from the application's origin
+      defaultSrc: ["'self'"],
+      // Explicitly allow scripts from our external CDNs and local scripts
+      scriptSrc: ["'self'", 'https://cdn.jsdelivr.net'],
+      connectSrc: ["'self'", 'https://cdn.jsdelivr.net'],
+      // Add other directives if needed (e.g., style-src, font-src, etc.)
+    },
+  },
+})
 
 // CORS: Allows requests from other origins (crucial if running FE/BE on different ports, e.g., during dev)
 app.register(cors, {
