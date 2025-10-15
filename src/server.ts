@@ -264,7 +264,7 @@ app.post('/login', async (req, reply) => {
   }
 
   // Password mismatch
-  reply.view('login.hbs', {
+  return reply.view('login.hbs', {
     title: 'Beet - Ultra lightweight AI chat',
     errorMessage: 'Invalid username or password.',
     csrfToken,
