@@ -656,25 +656,6 @@ app.get(
   },
 )
 
-// app.get(
-//   '/chat-history',
-//   { preHandler: optionalVerifyJWT },
-//   async (req, reply) => {
-//     // const sessionChatsKey = `session:${req.session.sessionId}:chats`
-//     const sessionChatsKey = getChatKeyPrefix(req) + ':chats'
-//     const chatIds = await app.redis.lRange(sessionChatsKey, 0, -1)
-//
-//     const chats = []
-//     for (const id of chatIds) {
-//       const chatData = await app.redis.hGetAll(`chat:${id}`)
-//       chats.push({ id, ...chatData })
-//     }
-//     console.log('chats', chats)
-//
-//     return reply.view('partials/chat-list.hbs', { chats })
-//   },
-// )
-
 app.get('/login-form', (req, reply) => {
   reply.view('partials/login-form.hbs')
 })
