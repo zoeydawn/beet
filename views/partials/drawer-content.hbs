@@ -32,10 +32,9 @@
     {{> new-chat-button}}
 </div>
 
-{{! 3. Footer with New Chat and Logout (FIXED BOTTOM SECTION) }}
 <div class='drawer-footer centered'>
   {{#if user}}
-    <form hx-post='/logout' hx-target='#drawer-content-wrapper' hx-swap='outerHTML' style='padding: 0 1rem;'>
+    <form hx-post='/logout' hx-target='body' hx-swap='innerHTML' style='padding: 0 1rem;'>
       <button type='submit' class='contrast outline small-button'>
         Logout
       </button>
