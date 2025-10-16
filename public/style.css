@@ -124,12 +124,6 @@
   cursor: pointer;
 }
 
-.chat-list {
-  display: flex;
-  flex-direction: column;
-  padding-top: 80px;
-}
-
 #page-header-container {
   position: fixed;
   width: 100%;
@@ -323,10 +317,6 @@
   text-align: center;
   position: absolute;
   bottom: 50px;
-}
-
-#drawer {
-  padding: 0;
 }
 
 #drawer-content {
