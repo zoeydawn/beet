@@ -9,7 +9,7 @@ function loadDrawerContent() {
   // This ensures fresh chat history is fetched every time.
   if (typeof htmx !== 'undefined') {
     htmx.ajax('GET', '/drawer-content', {
-      target: '#drawer-content',
+      target: '#drawer-content-wrapper',
       swap: 'innerHTML',
       // We don't use a success handler here as the swap itself is the primary action.
     })

@@ -1,43 +1,44 @@
-<div class="user-auth-area">
+{{! Logo at the top }}
+<img src='/static/beet_logo_400x400.png' alt='Beet Chat App Logo' class='drawer-logo' />
 
-      {{#if user}}
-        <a
-          class='internal-link login-button'
-          href='#'
-        >
-          {{> user-icon }}
-          {{user.username}}
-        </a>
-      {{else}}
-       {{> login-button }}
-       {{/if}}
-    </div>
-
-
-{{! 2. Chat List Container (where chat-list.hbs will be injected/rendered by the server) }}
-<ul class='chat-list'>
+{{! User Status/Auth Link Area (HEADER) }}
+<div class="user-auth-area centered">
   {{#if user}}
-    {{! The server will fill this list via the /drawer-content route }}
-    {{#if chats.length}}
-      {{> chat-list chats=chats }}
-    {{else}}
-      <li>No chats yet...</li>
-    {{/if}}
+    <div class="login-container">
+      Welcome, <strong>{{user.username}}</strong>
+    </div>
   {{else}}
-    <li>Log in to view persistent history.</li>
+    {{> login-button }}
   {{/if}}
-</ul>
-
-{{! 3. New Chat Button }}
-<div style='padding: 1rem 1rem 0;'>
-  {{> new-chat-button}}
 </div>
 
-{{! 4. Logout Button (Only visible when logged in) }}
-{{#if user}}
-  <form hx-post='/logout' hx-target='#drawer-content' hx-swap='outerHTML' style='padding: 1rem;'>
-    <button type='submit' class='contrast outline small-button'>
-      Logout
-    </button>
-  </form>
-{{/if}}
+{{! 2. Chat List Container (SCROLLABLE MIDDLE SECTION) }}
+<div class='chat-list-scroll-area' style="margin-top: 1rem;">
+  <ul class='chat-list'>
+    {{! The chat list titles are now defined in chat-list.hbs and injected/rendered below }}
+    {{#if user}}
+      {{#if chats.length}}
+        {{> chat-list chats=chats }}
+      {{else}}
+        <li><a href='#'>No chats yet...</a></li>
+      {{/if}}
+    {{else}}
+      <li><a href='#'>Log in to view persistent history.</a></li>
+    {{/if}}
+  </ul>
+</div>
+
+<div class='centered new-chat-button-wrapper'>
+    {{> new-chat-button}}
+</div>
+
+{{! 3. Footer with New Chat and Logout (FIXED BOTTOM SECTION) }}
+<div class='drawer-footer centered'>
+  {{#if user}}
+    <form hx-post='/logout' hx-target='#drawer-content-wrapper' hx-swap='outerHTML' style='padding: 0 1rem;'>
+      <button type='submit' class='contrast outline small-button'>
+        Logout
+      </button>
+    </form>
+  {{/if}}
+</div>
