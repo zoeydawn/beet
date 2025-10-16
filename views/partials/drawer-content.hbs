@@ -1,4 +1,4 @@
-    <div class="user-auth-area">
+<div class="user-auth-area">
 
       {{#if user}}
         <a
@@ -13,18 +13,31 @@
        {{/if}}
     </div>
 
-  <ul class='chat-list'>
-    <li>Loading chats...</li>
-  </ul>
 
-  {{> new-chat-button}}
-
+{{! 2. Chat List Container (where chat-list.hbs will be injected/rendered by the server) }}
+<ul class='chat-list'>
   {{#if user}}
-    <form hx-post='/logout' hx-target='body' hx-swap='innerHTML' style="padding: 1rem;">
-      <button type='submit' class='secondary outline small-button'>
-        Logout
-      </button>
-    </form>
+    {{! The server will fill this list via the /drawer-content route }}
+    {{#if chats.length}}
+      {{> chat-list chats=chats }}
+    {{else}}
+      <li>No chats yet...</li>
+    {{/if}}
+  {{else}}
+    <li>Log in to view persistent history.</li>
   {{/if}}
+</ul>
 
-  <a class='internal-link' id='menu-close-btn'>«</a>
+{{! 3. New Chat Button }}
+<div style='padding: 1rem 1rem 0;'>
+  {{> new-chat-button}}
+</div>
+
+{{! 4. Logout Button (Only visible when logged in) }}
+{{#if user}}
+  <form hx-post='/logout' hx-target='#drawer-content' hx-swap='outerHTML' style='padding: 1rem;'>
+    <button type='submit' class='contrast outline small-button'>
+      Logout
+    </button>
+  </form>
+{{/if}}

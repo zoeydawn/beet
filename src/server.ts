@@ -629,23 +629,51 @@ app.get('/new-chat', { preHandler: optionalVerifyJWT }, (req, reply) => {
 })
 
 app.get(
-  '/chat-history',
+  '/drawer-content',
   { preHandler: optionalVerifyJWT },
   async (req, reply) => {
-    // const sessionChatsKey = `session:${req.session.sessionId}:chats`
-    const sessionChatsKey = getChatKeyPrefix(req) + ':chats'
-    const chatIds = await app.redis.lRange(sessionChatsKey, 0, -1)
+    // 1. Get user status
+    const user = req.userId ? { username: req.username } : null
 
-    const chats = []
-    for (const id of chatIds) {
-      const chatData = await app.redis.hGetAll(`chat:${id}`)
-      chats.push({ id, ...chatData })
+    // 2. Get chat history (using logic previously in /chat-history)
+    let chats = []
+    if (user) {
+      const sessionChatsKey = getChatKeyPrefix(req) + ':chats'
+      const chatIds = await app.redis.lRange(sessionChatsKey, 0, -1)
+
+      for (const id of chatIds) {
+        const chatData = await app.redis.hGetAll(`chat:${id}`)
+        chats.push({ id, ...chatData })
+      }
     }
-    console.log('chats', chats)
 
-    return reply.view('partials/chat-list.hbs', { chats })
+    // 3. Render the content partial
+    return reply.view('partials/drawer-content.hbs', {
+      user,
+      chats: chats, // Pass the chats array
+      // We do NOT need to render chat-list.hbs separately now
+    })
   },
 )
+
+// app.get(
+//   '/chat-history',
+//   { preHandler: optionalVerifyJWT },
+//   async (req, reply) => {
+//     // const sessionChatsKey = `session:${req.session.sessionId}:chats`
+//     const sessionChatsKey = getChatKeyPrefix(req) + ':chats'
+//     const chatIds = await app.redis.lRange(sessionChatsKey, 0, -1)
+//
+//     const chats = []
+//     for (const id of chatIds) {
+//       const chatData = await app.redis.hGetAll(`chat:${id}`)
+//       chats.push({ id, ...chatData })
+//     }
+//     console.log('chats', chats)
+//
+//     return reply.view('partials/chat-list.hbs', { chats })
+//   },
+// )
 
 app.get('/login-form', (req, reply) => {
   reply.view('partials/login-form.hbs')

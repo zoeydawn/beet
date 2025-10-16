@@ -1,26 +1,48 @@
 const drawer = document.getElementById('drawer')
-const btn = document.getElementById('menu-open-btn')
-const sidebar = document.getElementById('sidebar')
+const btn = document.getElementById('menu-open-btn') // The button in the sidebar
+const drawerContent = document.getElementById('drawer-content')
+const sidebar = document.getElementById('sidebar') // Re-adding sidebar variable
 
-btn.addEventListener('click', (e) => {
-  e.stopPropagation() // prevent click bubbling
+// --- Function to fetch and swap drawer content ---
+function loadDrawerContent() {
+  // Always trigger the HTMX GET request when the drawer opens
+  // This ensures fresh chat history is fetched every time.
+  if (typeof htmx !== 'undefined') {
+    htmx.ajax('GET', '/drawer-content', {
+      target: '#drawer-content',
+      swap: 'innerHTML',
+      // We don't use a success handler here as the swap itself is the primary action.
+    })
+  }
+}
+
+// --- Function to toggle the drawer state ---
+function toggleDrawer(e) {
+  e.stopPropagation()
   drawer.classList.toggle('open')
 
   if (drawer.classList.contains('open')) {
-    // console.log('open')
-    htmx.trigger(drawer, 'revealed') // load chats when drawer opens
+    // ⚠️ On open, load the content every time for fresh data.
+    loadDrawerContent()
   }
-})
+}
 
-sidebar.addEventListener('click', (e) => {
-  e.stopPropagation() // prevent click bubbling
-  drawer.classList.toggle('open')
+// --- Event Handlers ---
 
-  if (drawer.classList.contains('open')) {
-    // console.log('open')
-    htmx.trigger(drawer, 'revealed') // load chats when drawer opens
-  }
-})
+// Open Button (The primary trigger)
+if (btn) {
+  btn.addEventListener('click', toggleDrawer)
+}
+
+// Sidebar Click
+if (sidebar) {
+  sidebar.addEventListener('click', (e) => {
+    // Only toggle if the click is on the sidebar itself, not a link or other element
+    if (e.target === sidebar) {
+      toggleDrawer(e)
+    }
+  })
+}
 
 // Close drawer if click happens outside
 document.addEventListener('click', (e) => {
@@ -33,12 +55,15 @@ document.addEventListener('click', (e) => {
   }
 })
 
-// close drawer when link is clicked
+// Close drawer when an internal link is clicked (to load a chat)
 drawer.addEventListener('click', (e) => {
   if (
     e.target.tagName === 'A' &&
     e.target.classList.contains('internal-link')
   ) {
-    drawer.classList.remove('open')
+    // Wait a moment for HTMX to start the swap before closing
+    setTimeout(() => {
+      drawer.classList.remove('open')
+    }, 100)
   }
 })
