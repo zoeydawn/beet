@@ -1,9 +1,9 @@
 const drawer = document.getElementById('drawer')
-const btn = document.getElementById('menu-open-btn') // The button in the sidebar
+const btn = document.getElementById('menu-open-btn')
 const drawerContent = document.getElementById('drawer-content')
-const sidebar = document.getElementById('sidebar') // Re-adding sidebar variable
+const sidebar = document.getElementById('sidebar')
 
-// --- Function to fetch and swap drawer content ---
+// --- Function to fetch drawer content ---
 function loadDrawerContent() {
   // Always trigger the HTMX GET request when the drawer opens
   // This ensures fresh chat history is fetched every time.
@@ -22,7 +22,7 @@ function toggleDrawer(e) {
   drawer.classList.toggle('open')
 
   if (drawer.classList.contains('open')) {
-    // ⚠️ On open, load the content every time for fresh data.
+    // On open, load the content every time for fresh data.
     loadDrawerContent()
   }
 }
@@ -37,10 +37,9 @@ if (btn) {
 // Sidebar Click
 if (sidebar) {
   sidebar.addEventListener('click', (e) => {
-    // Only toggle if the click is on the sidebar itself, not a link or other element
-    if (e.target === sidebar) {
-      toggleDrawer(e)
-    }
+    // if (e.target === sidebar) {
+    toggleDrawer(e)
+    // }
   })
 }
 

@@ -257,7 +257,6 @@
   justify-content: center;
 }
 
-/* --- NEW/UPDATED STYLES --- */
 /* TODO: check for duplicates */
 
 .drawer-logo {
@@ -279,9 +278,8 @@
   padding-bottom: 120px;
 }
 
-/* Style the chat list container to be the primary scrollable area */
 .chat-list-scroll-area {
-  overflow-y: auto; /* Enable vertical scrolling */
+  overflow-y: auto;
   width: 100%;
 }
 
@@ -290,7 +288,7 @@
   flex-direction: column;
   padding: 0;
   margin: 0;
-  list-style: none; /* Remove bullet points */
+  list-style: none;
   width: 100%;
 }
 
@@ -303,12 +301,12 @@
 .chat-list li a {
   display: block;
   text-decoration: none;
-  color: var(--pico-muted-color); /* Use a muted color for links */
+  color: var(--pico-muted-color);
   font-size: 0.9em;
-  padding: 0.5rem 1rem; /* Padding for the list item content */
+  padding: 0.5rem 1rem;
   white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis; /* Truncate long chat titles */
+  text-overflow: ellipsis;
 }
 
 .chat-list li a:hover {
