@@ -227,10 +227,6 @@
   justify-content: center;
 }
 
-.user-icon {
-  height: 40px;
-}
-
 .login-button {
   text-decoration: none;
   display: flex;
