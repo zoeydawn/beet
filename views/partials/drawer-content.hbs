@@ -7,8 +7,6 @@
     <div class="login-container">
       Welcome, <strong>{{user.username}}</strong>
     </div>
-  {{else}}
-    {{> login-button }}
   {{/if}}
 </div>
 
@@ -23,7 +21,7 @@
         <li><a href='#'>No chats yet...</a></li>
       {{/if}}
     {{else}}
-      <li><a href='#'>Log in to view persistent history.</a></li>
+      <li><a href='/login'>Log in to view chat history.</a></li>
     {{/if}}
   </ul>
 </div>
@@ -39,5 +37,9 @@
         Logout
       </button>
     </form>
+  {{else}}
+    <div class="login-button-wrapper">
+      {{> login-button }}
+    </div>
   {{/if}}
 </div>
