@@ -1,13 +1,8 @@
-<p id='chat-loading-spinner' class='htmx-indicator'>
-  <progress></progress>
-  <em>Thinking...</em>
-</p>
-
 <form
   hx-post='/new-ask/{{id}}'
   hx-target='#chat-messages'
   hx-swap='beforeend'
-  hx-indicator='#chat-loading-spinner'
+  hx-indicator='#global-loading-spinner'
   onhtmx:afterOnLoad='this.reset()'
 >
   {{> form-values}}

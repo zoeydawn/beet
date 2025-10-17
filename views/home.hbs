@@ -10,7 +10,13 @@
     <title>{{title}}</title>
   </head>
   <body>
-    {{! Render the header partial }}
+
+    <div id='global-loading-spinner'>
+      <p style="text-align:center;">
+        <progress></progress>
+        <em>Thinking...</em>
+      </p>
+    </div>
 
     <main id='main'>
       {{> ask-form}}

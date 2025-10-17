@@ -1,14 +1,9 @@
 <section id='ask-form' class='container'>
-  <p id='loading-spinner' class='htmx-indicator'>
-    <progress></progress>
-    <em>Thinking...</em>
-  </p>
-
   <form
     hx-post='/initial-ask'
     hx-target='#ask-form'
     hx-swap='outerHTML'
-    hx-indicator='#loading-spinner'
+    hx-indicator='#global-loading-spinner'
   >
   {{> form-values }}
   </form>
