@@ -42,8 +42,8 @@ document.body.addEventListener('htmx:sseMessage', function (e) {
 })
 
 document.body.addEventListener('htmx:beforeRequest', (e) => {
-  // show "generating response" spinner
   if (e.target.matches('[hx-post="/initial-ask"], [hx-post^="/new-ask/"]')) {
+    // show "generating response" spinner
     if (generatingSpinner) {
       generatingSpinner.classList.add('visible')
     }
@@ -57,7 +57,6 @@ document.body.addEventListener('htmx:beforeRequest', (e) => {
     }
     if (chatSubmit) {
       chatSubmit.disabled = true
-      console.log('disabling submit')
     }
   }
 })
