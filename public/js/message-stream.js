@@ -1,4 +1,5 @@
 import { marked } from 'https://cdn.jsdelivr.net/npm/marked/lib/marked.esm.js'
+const generatingSpinner = document.getElementById('generating-response-spinner')
 
 function renderMarkdown(element, content) {
   // Format the buffer so that markdown can be parsed without issues
@@ -40,9 +41,23 @@ document.body.addEventListener('htmx:sseMessage', function (e) {
   }
 })
 
+document.body.addEventListener('htmx:beforeRequest', (e) => {
+  // show "generating response" spinner
+  if (e.target.matches('[hx-post="/initial-ask"], [hx-post="/new-ask"]')) {
+    if (generatingSpinner) {
+      generatingSpinner.classList.add('visible')
+    }
+  }
+})
+
 document.body.addEventListener('htmx:sseClose', function (e) {
-  // Final render when stream closes (to catch any remaining tokens)
   if (e.detail.type === 'message') {
+    // hide "generating response" spinner
+    if (generatingSpinner) {
+      generatingSpinner.classList.remove('visible')
+    }
+
+    // Final render when stream closes (to catch any remaining tokens)
     const id = e.target.id
     if (buffers[id]) {
       renderMarkdown(e.target, buffers[id])

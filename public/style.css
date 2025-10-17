@@ -330,11 +330,13 @@
   top: 110px;
   left: 50%;
   transform: translate(-50%, -50%);
-  border-radius: 25%;
+  border-radius: 100px;
+  width: 150px;
   background-color: #000;
   font-size: 12px;
-  padding: 8px 12px;
+  padding: 12px;
   color: var(--pico-primary-background);
+  text-align: center;
 }
 
 #global-loading-spinner {
@@ -347,6 +349,20 @@
 
 /* HTMX automatically adds the htmx-request class to the indicator */
 #global-loading-spinner.htmx-request {
+  display: block;
+  opacity: 1;
+}
+
+#generating-response-spinner {
+  z-index: 1000;
+  /* HTMX indicator standard styles */
+  display: none;
+  opacity: 0;
+  transition: opacity 200ms ease-in;
+}
+
+/* HTMX automatically adds the htmx-request class to the indicator */
+#generating-response-spinner.visible {
   display: block;
   opacity: 1;
 }
