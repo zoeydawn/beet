@@ -341,28 +341,20 @@
 
 #global-loading-spinner {
   z-index: 1001;
-  /* HTMX indicator standard styles */
   display: none;
   opacity: 0;
   transition: opacity 200ms ease-in;
 }
 
-/* HTMX automatically adds the htmx-request class to the indicator */
-#global-loading-spinner.htmx-request {
+#global-loading-spinner.htmx-request,
+#generating-response-spinner.visible {
   display: block;
   opacity: 1;
 }
 
 #generating-response-spinner {
   z-index: 1000;
-  /* HTMX indicator standard styles */
   display: none;
   opacity: 0;
   transition: opacity 200ms ease-in;
-}
-
-/* HTMX automatically adds the htmx-request class to the indicator */
-#generating-response-spinner.visible {
-  display: block;
-  opacity: 1;
 }
