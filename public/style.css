@@ -211,7 +211,8 @@
     margin-left: 0;
   }
 
-  #model-select {
+  #model-select,
+  #generating-response-spinner {
     left: 15px;
   }
 }
@@ -327,9 +328,8 @@
 
 .chat-loading-indicator {
   position: fixed;
-  top: 110px;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  top: 80px;
+  left: 100px;
   border-radius: 100px;
   width: 150px;
   background-color: #000;
