@@ -5,8 +5,13 @@
     placeholder='Ask me anything'
     aria-label='ask me anything'
     required
+    {{#if streamInProgress}} disabled {{/if}}
   />
-  <input type='submit' value='Ask' />
+  <input 
+    type='submit'
+    value='Ask'
+    {{#if streamInProgress}} disabled {{/if}}
+  />
 </fieldset>
 
 <select id='model-select' name='model' aria-label='Select' required>

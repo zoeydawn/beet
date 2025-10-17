@@ -423,6 +423,7 @@ app.post(
       question,
       user: { username: req.username },
       modelGroups,
+      streamInProgress: true,
     })
   },
 )
@@ -473,6 +474,7 @@ app.post(
         id: id,
         model,
         question: question,
+        streamInProgress: true,
       })
     } catch (err) {
       app.log.error('Failed to save new prompt to Redis', err)
@@ -692,6 +694,7 @@ app.get('/chat/:id', { preHandler: optionalVerifyJWT }, async (req, reply) => {
     model: chatMeta.model || defaultModel,
     messages: parsedMessages,
     modelGroups,
+    streamInProgress: false,
   })
 })
 

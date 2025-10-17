@@ -47,6 +47,18 @@ document.body.addEventListener('htmx:beforeRequest', (e) => {
     if (generatingSpinner) {
       generatingSpinner.classList.add('visible')
     }
+
+    // Disable form elements ---
+    const chatInput = document.querySelector('input[name="chat-question"]')
+    const chatSubmit = document.querySelector('input[type="submit"]')
+
+    if (chatInput) {
+      chatInput.disabled = true
+    }
+    if (chatSubmit) {
+      chatSubmit.disabled = true
+      console.log('disabling submit')
+    }
   }
 })
 
@@ -55,6 +67,18 @@ document.body.addEventListener('htmx:sseClose', function (e) {
     // hide "generating response" spinner
     if (generatingSpinner) {
       generatingSpinner.classList.remove('visible')
+    }
+
+    // Re-enable form elements ---
+    const chatInput = document.querySelector('input[name="chat-question"]')
+    const chatSubmit = document.querySelector('input[type="submit"]')
+
+    if (chatInput) {
+      chatInput.disabled = false
+      chatInput.focus() // Focus the input for quick follow-up
+    }
+    if (chatSubmit) {
+      chatSubmit.disabled = false
     }
 
     // Final render when stream closes (to catch any remaining tokens)
