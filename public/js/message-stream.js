@@ -43,7 +43,7 @@ document.body.addEventListener('htmx:sseMessage', function (e) {
 
 document.body.addEventListener('htmx:beforeRequest', (e) => {
   // show "generating response" spinner
-  if (e.target.matches('[hx-post="/initial-ask"], [hx-post="/new-ask"]')) {
+  if (e.target.matches('[hx-post="/initial-ask"], [hx-post^="/new-ask/"]')) {
     if (generatingSpinner) {
       generatingSpinner.classList.add('visible')
     }
