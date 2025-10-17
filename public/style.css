@@ -325,14 +325,20 @@
   padding-bottom: 3rem;
 }
 
-#global-loading-spinner {
+.chat-loading-indicator {
   position: fixed;
   top: 110px;
-  left: 100px;
+  left: 50%;
   transform: translate(-50%, -50%);
-  z-index: 1001;
-  padding: 1rem;
+  border-radius: 25%;
+  background-color: #000;
+  font-size: 12px;
+  padding: 8px 12px;
+  color: var(--pico-primary-background);
+}
 
+#global-loading-spinner {
+  z-index: 1001;
   /* HTMX indicator standard styles */
   display: none;
   opacity: 0;
