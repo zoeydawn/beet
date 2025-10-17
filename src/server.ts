@@ -650,8 +650,7 @@ app.get(
     // 3. Render the content partial
     return reply.view('partials/drawer-content.hbs', {
       user,
-      chats: chats, // Pass the chats array
-      // We do NOT need to render chat-list.hbs separately now
+      chats,
     })
   },
 )
