@@ -2,7 +2,7 @@
   {{> chat-list-items }}
 
   {{#if nextOffset}}
-    <li id='load-more-container'>
+    <li id='load-more-container' class='centered'>
       <button
         class='contrast outline small-button load-more-button'
         hx-get='/chat-history?offset={{nextOffset}}'
