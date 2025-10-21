@@ -10,3 +10,16 @@
     </a>
   </li>
 {{/each}}
+
+{{#if nextOffset}}
+  <li id='load-more-container' class='centered'>
+    <button
+      class='contrast outline small-button load-more-button'
+      hx-get='/chat-history?offset={{nextOffset}}'
+      hx-target='#load-more-container'
+      hx-swap='outerHTML'
+    >
+      Load More
+    </button>
+  </li>
+{{/if}}
