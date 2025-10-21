@@ -10,17 +10,17 @@ export type ModelsObject = {
   [key: string]: Model
 }
 
-export const defaultModel = 'gpt-oss-20b'
+export const defaultModel = 'gpt-oss-120b'
 
-export const defaultPremiumModel = 'gpt-oss-120b'
+export const defaultPremiumModel = 'qwen3-235b'
 
 export const models: ModelsObject = {
-  'gpt-oss-20b': {
-    value: 'gpt-oss-20b',
-    hfValue: 'openai/gpt-oss-20b',
-    label: 'GPT-OSS 20B',
+  'gpt-oss-120b': {
+    value: 'gpt-oss-120b',
+    hfValue: 'openai/gpt-oss-120b',
+    label: 'GPT-OSS 120B',
     isPremium: false,
-    maxTokens: 500,
+    maxTokens: 1000,
   },
   'llama3-3': {
     value: 'llama3-3',
@@ -36,33 +36,26 @@ export const models: ModelsObject = {
     isPremium: false,
     maxTokens: 500,
   },
-  'gpt-oss-120b': {
-    value: 'gpt-oss-120b',
-    hfValue: 'openai/gpt-oss-120b',
-    label: 'GPT-OSS 120B',
+  'qwen3-235b': {
+    value: 'qwen3-235b',
+    hfValue: 'Qwen/Qwen3-235B-A22B-Instruct-2507',
+    label: 'Qwen3 235B',
     isPremium: true,
-    maxTokens: 1000,
+    maxTokens: 2000,
   },
   'qwen3-coder-480b': {
     value: 'qwen3-coder-480b',
     hfValue: 'Qwen/Qwen3-Coder-480B-A35B-Instruct',
     label: 'Qwen3-Coder 480B',
     isPremium: true,
-    maxTokens: 1500,
-  },
-  'deepseek-r1': {
-    value: 'deepseek-r1',
-    hfValue: 'deepseek-ai/DeepSeek-R1',
-    label: 'DeepSeek R1',
-    isPremium: true,
-    maxTokens: 1500,
+    maxTokens: 2000,
   },
   'deepseek-v3-terminus': {
     value: 'deepseek-v3-terminus',
     hfValue: 'deepseek-ai/DeepSeek-V3.1-Terminus',
     label: 'DeepSeek V3-Terminus',
     isPremium: true,
-    maxTokens: 1500,
+    maxTokens: 2500,
   },
 }
 
