@@ -10,24 +10,24 @@ export type ModelsObject = {
   [key: string]: Model
 }
 
-export const defaultModel = 'gpt-oss-120b'
+export const defaultModel = 'llama3-3'
 
 export const defaultPremiumModel = 'qwen3-235b'
 
 export const models: ModelsObject = {
-  'gpt-oss-120b': {
-    value: 'gpt-oss-120b',
-    hfValue: 'openai/gpt-oss-120b',
-    label: 'GPT-OSS 120B',
-    isPremium: false,
-    maxTokens: 1000,
-  },
   'llama3-3': {
     value: 'llama3-3',
     hfValue: 'meta-llama/Llama-3.3-70B-Instruct',
     label: 'Llama 3.3',
     isPremium: false,
     maxTokens: 500,
+  },
+  'gpt-oss-120b': {
+    value: 'gpt-oss-120b',
+    hfValue: 'openai/gpt-oss-120b',
+    label: 'GPT-OSS',
+    isPremium: false,
+    maxTokens: 1000,
   },
   'qwen3-coder-30b': {
     value: 'qwen3-coder-30b',
