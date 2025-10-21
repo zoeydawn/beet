@@ -555,6 +555,7 @@ app.get(
             messages,
             stream: true,
             max_tokens: maxTokens,
+            temperature: 0.6,
           }),
         },
       )
