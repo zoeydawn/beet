@@ -73,8 +73,8 @@ document.body.addEventListener('htmx:sseClose', function (e) {
     const chatSubmit = document.querySelector('input[type="submit"]')
 
     if (chatInput) {
-      chatInput.disabled = false
-      chatInput.focus() // Focus the input for quick follow-up
+      chatInput.disabled = false // re-enable the input
+      chatInput.value = '' // Clear the input value
     }
     if (chatSubmit) {
       chatSubmit.disabled = false
