@@ -655,8 +655,11 @@ app.get(
     // 2. Get chat history (using logic previously in /chat-history)
     let chats = []
     if (user) {
+      const MAX_CHATS = 10
       const sessionChatsKey = getChatKeyPrefix(req) + ':chats'
-      const chatIds = await app.redis.lRange(sessionChatsKey, 0, -1)
+      const chatIds = await app.redis.lRange(sessionChatsKey, -MAX_CHATS, -1)
+
+      chatIds.reverse() // reverse the array to show newest first
 
       for (const id of chatIds) {
         const chatData = await app.redis.hGetAll(`chat:${id}`)
