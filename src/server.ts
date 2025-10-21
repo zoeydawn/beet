@@ -32,7 +32,7 @@ const productionUrl = process.env.PRODUCTION_URL || 'https://beet.zoey.ninja'
 
 import redisPlugin from './plugins/redis.ts'
 import { models, createModelGroups, defaultModel } from './utils/models.ts'
-import { systemPrompt } from './utils/prompts.js'
+import { systemPrompt } from './utils/prompts.ts'
 
 // Check for required secrets
 if (!JWT_SECRET) {
