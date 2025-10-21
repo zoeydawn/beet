@@ -358,3 +358,10 @@
   opacity: 0;
   transition: opacity 200ms ease-in;
 }
+
+#load-more-container {
+  padding-bottom: 1rem;
+  a {
+    cursor: pointer;
+  }
+}
