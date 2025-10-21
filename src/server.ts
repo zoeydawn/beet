@@ -32,6 +32,7 @@ const productionUrl = process.env.PRODUCTION_URL || 'https://beet.zoey.ninja'
 
 import redisPlugin from './plugins/redis.ts'
 import { models, createModelGroups, defaultModel } from './utils/models.ts'
+import { systemPrompt } from './utils/prompts.js'
 
 // Check for required secrets
 if (!JWT_SECRET) {
@@ -520,6 +521,13 @@ app.get(
       const messages = historyStrings.map((msg) => JSON.parse(msg))
 
       const { hfValue, maxTokens } = models[model]
+
+      // Insert the System Message at the beginning of the messages array
+      const systemMessage = {
+        role: 'system',
+        content: systemPrompt,
+      }
+      messages.unshift(systemMessage)
 
       reply.raw.writeHead(200, {
         'Content-Type': 'text/event-stream',
