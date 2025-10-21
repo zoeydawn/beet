@@ -517,7 +517,14 @@ app.get(
     const messagesKey = `messages:${id}`
 
     try {
-      const historyStrings = await app.redis.lRange(messagesKey, 0, -1)
+      // limit the messages to the last 10 (5 turns)
+      const MAX_MESSAGES_TO_SEND = 11
+
+      const historyStrings = await app.redis.lRange(
+        messagesKey,
+        -MAX_MESSAGES_TO_SEND,
+        -1,
+      )
       const messages = historyStrings.map((msg) => JSON.parse(msg))
 
       const { hfValue, maxTokens } = models[model]
