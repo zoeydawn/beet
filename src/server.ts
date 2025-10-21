@@ -645,32 +645,96 @@ app.get('/new-chat', { preHandler: optionalVerifyJWT }, (req, reply) => {
   reply.view('partials/ask-form.hbs', { modelGroups })
 })
 
+const CHAT_PAGE_SIZE = 10
+
 app.get(
   '/drawer-content',
   { preHandler: optionalVerifyJWT },
   async (req, reply) => {
-    // 1. Get user status
     const user = req.userId ? { username: req.username } : null
 
-    // 2. Get chat history (using logic previously in /chat-history)
+    let nextOffset = null
+    let hasHistory = false
+
     let chats = []
     if (user) {
-      const MAX_CHATS = 10
       const sessionChatsKey = getChatKeyPrefix(req) + ':chats'
-      const chatIds = await app.redis.lRange(sessionChatsKey, -MAX_CHATS, -1)
+      const totalChats = await app.redis.lLen(sessionChatsKey) // Get the total number of chats
 
-      chatIds.reverse() // reverse the array to show newest first
+      if (totalChats > 0) {
+        hasHistory = true
 
-      for (const id of chatIds) {
-        const chatData = await app.redis.hGetAll(`chat:${id}`)
-        chats.push({ id, ...chatData })
+        const chatIds = await app.redis.lRange(
+          sessionChatsKey,
+          -CHAT_PAGE_SIZE,
+          -1,
+        ) // get the most recent 10
+
+        chatIds.reverse() // reverse the array to show newest first
+
+        for (const id of chatIds) {
+          const chatData = await app.redis.hGetAll(`chat:${id}`)
+          chats.push({ id, ...chatData })
+        }
+
+        const hasMore = totalChats - CHAT_PAGE_SIZE > 0
+        nextOffset = hasMore ? CHAT_PAGE_SIZE : null
       }
     }
 
-    // 3. Render the content partial
     return reply.view('partials/drawer-content.hbs', {
       user,
       chats,
+      nextOffset,
+      hasHistory, // TODO: do we need this?
+    })
+  },
+)
+
+app.get(
+  '/chat-history',
+  { preHandler: optionalVerifyJWT },
+  async (req, reply) => {
+    // Get query parameters for pagination
+    const { offset: offsetString } = req.query as { offset: string | undefined }
+    const offset = parseInt(offsetString || '0', 10)
+
+    const sessionChatsKey = getChatKeyPrefix(req) + ':chats'
+    const totalChats = await app.redis.lLen(sessionChatsKey) // Get the total number of chats
+
+    const fetch_start_index = totalChats - (offset + CHAT_PAGE_SIZE)
+    const fetch_end_index = totalChats - offset - 1
+
+    if (fetch_end_index < 0) {
+      // No more chats to load
+      return reply.view('partials/chat-list-items.hbs', {
+        chats: [],
+        nextOffset: null,
+      })
+    }
+
+    const idsToLoad = await app.redis.lRange(
+      sessionChatsKey,
+      Math.max(0, fetch_start_index), // Start index must be >= 0
+      fetch_end_index,
+    )
+
+    idsToLoad.reverse()
+
+    const chats = []
+    for (const id of idsToLoad) {
+      const chatData = await app.redis.hGetAll(`chat:${id}`)
+      chats.push({ id, ...chatData })
+    }
+
+    // Determine the next offset
+    const hasMore = totalChats - (offset + CHAT_PAGE_SIZE) > 0
+    const nextOffset = hasMore ? offset + CHAT_PAGE_SIZE : null
+
+    return reply.view('partials/chat-list-items.hbs', {
+      chats: chats,
+      nextOffset: nextOffset,
+      isPagination: true, // Flag to indicate this is a pagination response
     })
   },
 )

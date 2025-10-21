@@ -1,16 +1,19 @@
 {{#if chats.length}}
-  {{#each chats}}
-    <li>
-      <a
-        class='internal-link'
-        hx-get='/chat/{{id}}'
-        hx-target='#main'
-        hx-swap='innerHTML'
+  {{> chat-list-items }}
+
+  {{#if nextOffset}}
+    <li id='load-more-container'>
+      <button
+        class='contrast outline small-button load-more-button'
+        hx-get='/chat-history?offset={{nextOffset}}'
+        hx-target='#load-more-container'
+        hx-swap='outerHTML'
       >
-        {{title}}...
-      </a>
+        Load More
+      </button>
     </li>
-  {{/each}}
+  {{/if}}
+
 {{else}}
   <li>No chats yet...</li>
 {{/if}}

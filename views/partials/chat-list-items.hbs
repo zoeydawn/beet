@@ -1,0 +1,12 @@
+{{#each chats}}
+  <li>
+    <a
+      class='internal-link'
+      hx-get='/chat/{{id}}'
+      hx-target='#main'
+      hx-swap='innerHTML'
+    >
+      {{title}}...
+    </a>
+  </li>
+{{/each}}
