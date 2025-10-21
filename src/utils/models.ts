@@ -20,42 +20,48 @@ export const models: ModelsObject = {
     hfValue: 'meta-llama/Llama-3.3-70B-Instruct',
     label: 'Llama 3.3',
     isPremium: false,
-    maxTokens: 500,
+    maxTokens: 10000,
+    // contextLength: 128000
   },
   'gpt-oss-120b': {
     value: 'gpt-oss-120b',
     hfValue: 'openai/gpt-oss-120b',
     label: 'GPT-OSS',
     isPremium: false,
-    maxTokens: 1000,
+    maxTokens: 10000,
+    // contextLength: 128000
   },
   'qwen3-coder-30b': {
     value: 'qwen3-coder-30b',
     hfValue: 'Qwen/Qwen3-Coder-30B-A3B-Instruct',
     label: 'Qwen3-Coder 30B',
     isPremium: false,
-    maxTokens: 500,
+    maxTokens: 20000,
+    // contextLength: 256k
   },
   'qwen3-235b': {
     value: 'qwen3-235b',
     hfValue: 'Qwen/Qwen3-235B-A22B-Instruct-2507',
     label: 'Qwen3 235B',
     isPremium: true,
-    maxTokens: 2000,
+    maxTokens: 20000,
+    // contextLength: 262144
   },
   'qwen3-coder-480b': {
     value: 'qwen3-coder-480b',
     hfValue: 'Qwen/Qwen3-Coder-480B-A35B-Instruct',
     label: 'Qwen3-Coder 480B',
     isPremium: true,
-    maxTokens: 2000,
+    maxTokens: 20000,
+    // contextLength: 256k
   },
   'deepseek-v3-terminus': {
     value: 'deepseek-v3-terminus',
     hfValue: 'deepseek-ai/DeepSeek-V3.1-Terminus',
     label: 'DeepSeek V3-Terminus',
     isPremium: true,
-    maxTokens: 2500,
+    maxTokens: 10000,
+    // contextLength: 128000
   },
 }
 
