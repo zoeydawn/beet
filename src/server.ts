@@ -654,7 +654,6 @@ app.get(
     const user = req.userId ? { username: req.username } : null
 
     let nextOffset = null
-    let hasHistory = false
 
     let chats = []
     if (user) {
@@ -662,8 +661,6 @@ app.get(
       const totalChats = await app.redis.lLen(sessionChatsKey) // Get the total number of chats
 
       if (totalChats > 0) {
-        hasHistory = true
-
         const chatIds = await app.redis.lRange(
           sessionChatsKey,
           -CHAT_PAGE_SIZE,
@@ -686,7 +683,6 @@ app.get(
       user,
       chats,
       nextOffset,
-      hasHistory, // TODO: do we need this?
     })
   },
 )
