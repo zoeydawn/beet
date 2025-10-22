@@ -483,6 +483,66 @@ app.post(
   },
 )
 
+async function pipeHFStreamToClient({ reader, reply, messagesKey }) {
+  const decoder = new TextDecoder('utf-8', { stream: true })
+  let leftover = ''
+  let fullResponse = ''
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+
+      // The rest of the logic is IDENTICAL to before.
+      leftover += decoder.decode(value, { stream: true })
+
+      const lines = leftover.split('\n')
+      leftover = lines.pop()
+
+      for (const rawLine of lines) {
+        const line = rawLine.trim()
+        if (!line.startsWith('data:')) continue
+
+        const payload = line.slice(6).trim()
+
+        if (payload === '[DONE]') {
+          const assistantMessage = JSON.stringify({
+            role: 'assistant',
+            content: fullResponse,
+          })
+          await app.redis.rPush(messagesKey, assistantMessage)
+          app.log.info(`Saved assistant response to ${messagesKey}`)
+
+          if (!reply.raw.writableEnded) {
+            reply.raw.write('event: close\ndata: done\n\n')
+            reply.raw.end()
+          }
+          return
+        }
+
+        let parsed
+        try {
+          parsed = JSON.parse(payload)
+        } catch (e) {
+          app.log.warn('Malformed JSON chunk from HF', e)
+          continue
+        }
+
+        const delta = parsed?.choices?.[0]?.delta?.content
+        if (!delta) continue
+
+        fullResponse += delta
+        const escaped = delta.replace(/\n/g, '<br>')
+        reply.raw.write(`data: ${escaped}\n\n`)
+      }
+    }
+  } finally {
+    // --- CRITICAL ---
+    // We are still responsible for releasing the lock when done.
+    reader.releaseLock()
+  }
+}
+
 app.get(
   '/stream/:id/:model',
   {
@@ -536,6 +596,8 @@ app.get(
       }
       messages.unshift(systemMessage)
 
+      reply.hijack()
+
       reply.raw.writeHead(200, {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
@@ -561,9 +623,10 @@ app.get(
         },
       )
 
-      if (!response.ok) {
-        app.log.error(`HF API failed with status: ${response.status}`)
-        throw new Error(`HTTP error! status: ${response.status}`)
+      if (!response.ok || !response.body) {
+        const errorMessage = `Hugging Face API error: ${response.status}`
+
+        throw new Error(errorMessage)
       }
 
       if (!response.body) {
@@ -572,68 +635,11 @@ app.get(
       }
 
       const reader = response.body.getReader()
-      const decoder = new TextDecoder()
-      let fullResponse = ''
 
-      try {
-        while (true) {
-          const { done, value } = await reader.read()
-
-          if (done) {
-            break
-          }
-
-          const chunk = decoder.decode(value)
-          const lines = chunk.split('\n')
-
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              const data = line.slice(6).trim()
-
-              if (data === '[DONE]') {
-                console.log('\n✨ Stream complete!')
-
-                // save full response to DB
-                const assistantMessage = JSON.stringify({
-                  role: 'assistant',
-                  content: fullResponse,
-                })
-
-                await app.redis.rPush(messagesKey, assistantMessage)
-                app.log.info(`Saved assistant response to ${messagesKey}`)
-
-                // Ensure the stream is closed properly
-                if (!reply.raw.writableEnded) {
-                  reply.raw.write('event: close\ndata: done\n\n')
-                  reply.raw.end()
-                }
-                return
-              }
-
-              try {
-                const parsed = JSON.parse(data)
-                const content = parsed.choices?.[0]?.delta?.content
-
-                if (content) {
-                  fullResponse += content
-                  process.stdout.write(content)
-
-                  // stream content to client
-                  const formattedContent = content.replace(/\n/g, '<br>')
-                  reply.raw.write(`data: ${formattedContent}\n\n`)
-                }
-              } catch (e) {
-                // Silently ignore JSON parse errors
-                continue
-              }
-            }
-          }
-        }
-      } finally {
-        reader.releaseLock()
-      }
+      await pipeHFStreamToClient({ reader, reply, messagesKey })
     } catch (err) {
       app.log.error('Error in stream route', err)
+      console.error(err)
 
       if (!reply.raw.writableEnded) {
         const friendlyMessage = 'Something went wrong, please try again.'
