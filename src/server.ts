@@ -555,12 +555,16 @@ app.get(
             messages,
             stream: true,
             max_tokens: maxTokens,
-            temperature: 0.6,
+            // do_sample: true,
+            // temperature: 0.7,
+            // top_p: 0.9,
+            // repetition_penalty: 1.1,
           }),
         },
       )
 
       if (!response.ok) {
+        app.log.error(`HF API failed with status: ${response.status}`)
         throw new Error(`HTTP error! status: ${response.status}`)
       }
 
@@ -632,7 +636,12 @@ app.get(
       }
     } catch (err) {
       app.log.error('Error in stream route', err)
+
       if (!reply.raw.writableEnded) {
+        const friendlyMessage = 'Something went wrong, please try again.'
+
+        reply.raw.write(`data: ${friendlyMessage}\n\n`)
+        reply.raw.write('event: close\ndata: done\n\n')
         reply.raw.end()
       }
     }
