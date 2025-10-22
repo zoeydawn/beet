@@ -322,7 +322,7 @@ app.post('/register', async (req, reply) => {
     })
     app.log.info(`New user registered: ${username}`)
   } catch (err) {
-    app.log.error('Failed to save new user to Redis', err)
+    app.log.error('Failed to save new user to Redis', err as any)
     return reply.view('register.hbs', {
       title: 'Beet - Ultra lightweight AI chat',
       errorMessage: 'Account creation failed due to a server error.',
@@ -413,7 +413,7 @@ app.post(
         `Started new chat: ${chatKey} (${req.userId ? 'user' : 'session'} ${req.userId || req.session.sessionId})`,
       )
     } catch (err) {
-      app.log.error('Failed to save initial chat to Redis', err)
+      app.log.error('Failed to save initial chat to Redis', err as any)
     }
 
     const modelGroups = createModelGroups(models, model, isPremiumUser)
@@ -477,8 +477,8 @@ app.post(
         question: question,
         streamInProgress: true,
       })
-    } catch (err) {
-      app.log.error('Failed to save new prompt to Redis', err)
+    } catch (err: unknown) {
+      app.log.error('Failed to save new prompt to Redis', err as any)
     }
   },
 )
@@ -504,7 +504,6 @@ async function pipeHFStreamToClient({
       const { done, value } = await reader.read()
       if (done) break
 
-      // The rest of the logic is IDENTICAL to before.
       leftover += decoder.decode(value, { stream: true })
 
       const lines = leftover.split('\n')
@@ -647,7 +646,7 @@ app.get(
 
       await pipeHFStreamToClient({ reader, reply, messagesKey })
     } catch (err) {
-      app.log.error('Error in stream route', err)
+      app.log.error('Error in stream route', err as any)
       console.error(err)
 
       if (!reply.raw.writableEnded) {
@@ -758,11 +757,11 @@ app.get(
   },
 )
 
-app.get('/login-form', (req, reply) => {
+app.get('/login-form', (_req, reply) => {
   reply.view('partials/login-form.hbs')
 })
 
-app.get('/create-account-form', (req, reply) => {
+app.get('/create-account-form', (_req, reply) => {
   reply.view('partials/create-account-form.hbs')
 })
 
