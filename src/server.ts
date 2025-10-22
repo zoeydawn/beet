@@ -555,10 +555,8 @@ app.get(
             messages,
             stream: true,
             max_tokens: maxTokens,
-            // do_sample: true,
-            // temperature: 0.7,
-            // top_p: 0.9,
-            // repetition_penalty: 1.1,
+            temperature: 0.7,
+            top_p: 0.9,
           }),
         },
       )
