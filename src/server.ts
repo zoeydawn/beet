@@ -483,8 +483,19 @@ app.post(
   },
 )
 
-async function pipeHFStreamToClient({ reader, reply, messagesKey }) {
-  const decoder = new TextDecoder('utf-8', { stream: true })
+async function pipeHFStreamToClient({
+  reader,
+  reply,
+  messagesKey,
+}: {
+  reader: ReadableStreamDefaultReader<Uint8Array>
+  reply: FastifyReply
+  messagesKey: string
+}): Promise<void> {
+  const decoder = new TextDecoder('utf-8', {
+    stream: true,
+  } as TextDecoderOptions)
+
   let leftover = ''
   let fullResponse = ''
 
@@ -497,7 +508,7 @@ async function pipeHFStreamToClient({ reader, reply, messagesKey }) {
       leftover += decoder.decode(value, { stream: true })
 
       const lines = leftover.split('\n')
-      leftover = lines.pop()
+      leftover = lines.pop() || ''
 
       for (const rawLine of lines) {
         const line = rawLine.trim()
@@ -524,7 +535,7 @@ async function pipeHFStreamToClient({ reader, reply, messagesKey }) {
         try {
           parsed = JSON.parse(payload)
         } catch (e) {
-          app.log.warn('Malformed JSON chunk from HF', e)
+          // malformed JSON
           continue
         }
 
@@ -537,8 +548,6 @@ async function pipeHFStreamToClient({ reader, reply, messagesKey }) {
       }
     }
   } finally {
-    // --- CRITICAL ---
-    // We are still responsible for releasing the lock when done.
     reader.releaseLock()
   }
 }
