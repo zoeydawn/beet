@@ -193,6 +193,75 @@ const getChatKeyPrefix = (req: FastifyRequest) => {
   return `session:${req.session.sessionId}`
 }
 
+// Stream the HF API response to the client
+async function pipeHFStreamToClient({
+  reader,
+  reply,
+  messagesKey,
+}: {
+  reader: ReadableStreamDefaultReader<Uint8Array>
+  reply: FastifyReply
+  messagesKey: string
+}): Promise<void> {
+  const decoder = new TextDecoder('utf-8', {
+    stream: true,
+  } as TextDecoderOptions)
+
+  let leftover = ''
+  let fullResponse = ''
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+
+      leftover += decoder.decode(value, { stream: true })
+
+      const lines = leftover.split('\n')
+      leftover = lines.pop() || ''
+
+      for (const rawLine of lines) {
+        const line = rawLine.trim()
+        if (!line.startsWith('data:')) continue
+
+        const payload = line.slice(6).trim()
+
+        if (payload === '[DONE]') {
+          const assistantMessage = JSON.stringify({
+            role: 'assistant',
+            content: fullResponse,
+          })
+          await app.redis.rPush(messagesKey, assistantMessage)
+          app.log.info(`Saved assistant response to ${messagesKey}`)
+
+          if (!reply.raw.writableEnded) {
+            reply.raw.write('event: close\ndata: done\n\n')
+            reply.raw.end()
+          }
+          return
+        }
+
+        let parsed
+        try {
+          parsed = JSON.parse(payload)
+        } catch (e) {
+          // malformed JSON
+          continue
+        }
+
+        const delta = parsed?.choices?.[0]?.delta?.content
+        if (!delta) continue
+
+        fullResponse += delta
+        const escaped = delta.replace(/\n/g, '<br>')
+        reply.raw.write(`data: ${escaped}\n\n`)
+      }
+    }
+  } finally {
+    reader.releaseLock()
+  }
+}
+
 app.get('/', { preHandler: optionalVerifyJWT }, (req, reply) => {
   console.log('GET / called')
 
@@ -482,74 +551,6 @@ app.post(
     }
   },
 )
-
-async function pipeHFStreamToClient({
-  reader,
-  reply,
-  messagesKey,
-}: {
-  reader: ReadableStreamDefaultReader<Uint8Array>
-  reply: FastifyReply
-  messagesKey: string
-}): Promise<void> {
-  const decoder = new TextDecoder('utf-8', {
-    stream: true,
-  } as TextDecoderOptions)
-
-  let leftover = ''
-  let fullResponse = ''
-
-  try {
-    while (true) {
-      const { done, value } = await reader.read()
-      if (done) break
-
-      leftover += decoder.decode(value, { stream: true })
-
-      const lines = leftover.split('\n')
-      leftover = lines.pop() || ''
-
-      for (const rawLine of lines) {
-        const line = rawLine.trim()
-        if (!line.startsWith('data:')) continue
-
-        const payload = line.slice(6).trim()
-
-        if (payload === '[DONE]') {
-          const assistantMessage = JSON.stringify({
-            role: 'assistant',
-            content: fullResponse,
-          })
-          await app.redis.rPush(messagesKey, assistantMessage)
-          app.log.info(`Saved assistant response to ${messagesKey}`)
-
-          if (!reply.raw.writableEnded) {
-            reply.raw.write('event: close\ndata: done\n\n')
-            reply.raw.end()
-          }
-          return
-        }
-
-        let parsed
-        try {
-          parsed = JSON.parse(payload)
-        } catch (e) {
-          // malformed JSON
-          continue
-        }
-
-        const delta = parsed?.choices?.[0]?.delta?.content
-        if (!delta) continue
-
-        fullResponse += delta
-        const escaped = delta.replace(/\n/g, '<br>')
-        reply.raw.write(`data: ${escaped}\n\n`)
-      }
-    }
-  } finally {
-    reader.releaseLock()
-  }
-}
 
 app.get(
   '/stream/:id/:model',
