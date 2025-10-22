@@ -446,7 +446,7 @@ app.post(
 
     const isPremiumUser = getIsPremiumUser(req)
 
-    // ⚠️ PREVENT PREMIUM MODEL UPGRADE FOR NON-PREMIUM USERS
+    // PREVENT PREMIUM MODEL UPGRADE FOR NON-PREMIUM USERS
     const selectedModel = models[model]
 
     if (selectedModel.isPremium && !isPremiumUser) {
@@ -457,13 +457,66 @@ app.post(
       const chatKey = `chat:${streamId}`
       const messagesKey = `messages:${streamId}`
 
+      let chatTitle = question.slice(0, 15) // Default fallback title
+      const systemPrompt = `
+You are an expert title generator. 
+Given a user's first message, your task is to output a concise title, no more than 7 words, that accurately summarizes the message. 
+You must respond with only the title and no other text, punctuation, or markdown.`
+
+      // Generate a title for the chat
+      try {
+        const titleResponse = await fetch(
+          'https://router.huggingface.co/v1/chat/completions',
+          {
+            headers: {
+              Authorization: `Bearer ${HF_TOKEN}`,
+              'Content-Type': 'application/json',
+            },
+            method: 'POST',
+            body: JSON.stringify({
+              model: 'meta-llama/Llama-3.1-8B-Instruct:fireworks-ai',
+              messages: [
+                {
+                  role: 'system',
+                  content: systemPrompt,
+                },
+                { role: 'user', content: question },
+              ],
+              // stream: false,
+              max_tokens: 20,
+            }),
+          },
+        )
+
+        if (titleResponse.ok) {
+          const titleData = await titleResponse.json()
+          console.log('title data', JSON.stringify(titleData))
+          const generatedTitle =
+            titleData.choices?.[0]?.message?.content?.trim()
+          console.log('generated title', generatedTitle)
+
+          if (generatedTitle) {
+            // Clean up any stray markdown or quotes from the model
+            chatTitle = generatedTitle.replace(/["'*]/g, '')
+          }
+        } else {
+          app.log.error(
+            `Failed to generate title. Status: ${titleResponse.status}`,
+          )
+          // Fallback to initial 15 chars (already set)
+        }
+      } catch (titleErr) {
+        app.log.error('Network error during title generation:', titleErr as any)
+        // Fallback to initial 15 chars (already set)
+      }
+
       // 1. Store the chat metadata in a Hash
       await app.redis.hSet(chatKey, {
         model: model,
         createdAt: new Date().toISOString(),
         // Store userId or a placeholder if anonymous
         userId: req.userId || `session:${req.session.sessionId}`,
-        title: question.slice(0, 15),
+        title: chatTitle,
       })
 
       // 2. Store the first user message in a List
