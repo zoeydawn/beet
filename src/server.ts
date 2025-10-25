@@ -271,7 +271,7 @@ app.get('/', { preHandler: optionalVerifyJWT }, (req, reply) => {
   const user = req.userId ? { username: req.username } : null
 
   reply.view('home', {
-    title: 'Beet - Ultra lightweight AI chat',
+    title: 'Beet - Ultra-lightweight AI chat',
     modelGroups,
     user,
   })
@@ -279,12 +279,12 @@ app.get('/', { preHandler: optionalVerifyJWT }, (req, reply) => {
 
 app.get('/login', (req, reply) => {
   const csrfToken = reply.generateCsrf()
-  reply.view('login.hbs', { csrfToken })
+  reply.view('login.hbs', { csrfToken, title: 'Login - Beet' })
 })
 
 app.get('/register', (req, reply) => {
   const csrfToken = reply.generateCsrf() // <--- NEW: Generate token
-  reply.view('register.hbs', { csrfToken })
+  reply.view('register.hbs', { csrfToken, title: 'Register - Beet' })
 })
 
 app.post('/login', async (req, reply) => {
@@ -432,6 +432,7 @@ app.post('/logout', { preHandler: optionalVerifyJWT }, async (req, reply) => {
 
 app.post(
   '/initial-ask',
+
   { preHandler: optionalVerifyJWT },
   async (req, reply) => {
     const { 'chat-question': question, model: userSelectedModel } =
