@@ -1,21 +1,5 @@
 <html lang='en'>
-  <head>
-    <meta charset='utf-8' />
-    <meta name='viewport' content='width=device-width, initial-scale=1' />
-
-    <link rel="icon" type="image/png" href="static/favicon-96x96.png" sizes="96x96" />
-    <link rel="icon" type="image/svg+xml" href="static/favicon.svg" />
-    <link rel="shortcut icon" href="static/favicon.ico" />
-    <link rel="apple-touch-icon" sizes="180x180" href="static/apple-touch-icon.png" />
-    <link rel="manifest" href="static/site.webmanifest" />
-
-    <!-- <meta name='color-scheme' content='light dark' /> -->
-    <link rel='stylesheet' href='static/pico.fuchsia.min.css' />
-    <link rel='stylesheet' href='static/style.css' />
-    <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.7/dist/htmx.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/htmx-ext-sse@2.2.2"></script>
-    <title>{{title}}</title>
-  </head>
+  {{> head}}
   <body>
     <div class="chat-loading-indicator" id='global-loading-spinner'>
       <div>
