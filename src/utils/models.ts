@@ -10,27 +10,27 @@ export type ModelsObject = {
   [key: string]: Model
 }
 
-export const defaultModel = 'llama3-3'
+export const defaultModel = 'gpt-oss-20b'
 
 export const defaultPremiumModel = 'qwen3-235b'
 
 export const models: ModelsObject = {
-  'llama3-3': {
-    value: 'llama3-3',
-    hfValue: 'meta-llama/Llama-3.3-70B-Instruct',
-    label: 'Llama 3.3',
+  'gpt-oss-20b': {
+    value: 'gpt-oss-20b',
+    hfValue: 'openai/gpt-oss-20b',
+    label: 'GPT-OSS 20B',
     isPremium: false,
     maxTokens: 10000,
     // contextLength: 128000
   },
-  'gpt-oss-120b': {
-    value: 'gpt-oss-120b',
-    hfValue: 'openai/gpt-oss-120b',
-    label: 'GPT-OSS',
-    isPremium: false,
-    maxTokens: 10000,
-    // contextLength: 128000
-  },
+  // 'qwen3-14b': {
+  //   value: 'qwen3-14b',
+  //   hfValue: 'Qwen/Qwen3-14B',
+  //   label: 'Qwen3 14B',
+  //   isPremium: false,
+  //   maxTokens: 4000,
+  //   // contextLength: 33k
+  // },
   'qwen3-coder-30b': {
     value: 'qwen3-coder-30b',
     hfValue: 'Qwen/Qwen3-Coder-30B-A3B-Instruct',
@@ -38,6 +38,14 @@ export const models: ModelsObject = {
     isPremium: false,
     maxTokens: 20000,
     // contextLength: 256k
+  },
+  'gpt-oss-120b': {
+    value: 'gpt-oss-120b',
+    hfValue: 'openai/gpt-oss-120b',
+    label: 'GPT-OSS 120B',
+    isPremium: true,
+    maxTokens: 10000,
+    // contextLength: 128000
   },
   'qwen3-235b': {
     value: 'qwen3-235b',
@@ -58,7 +66,7 @@ export const models: ModelsObject = {
   'deepseek-v3-terminus': {
     value: 'deepseek-v3-terminus',
     hfValue: 'deepseek-ai/DeepSeek-V3.1-Terminus',
-    label: 'DeepSeek V3-Terminus',
+    label: 'DeepSeek V3 Terminus',
     isPremium: true,
     maxTokens: 10000,
     // contextLength: 128000
