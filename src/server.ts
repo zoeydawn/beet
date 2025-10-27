@@ -108,7 +108,11 @@ app.register(helmet, {
       defaultSrc: ["'self'"],
       // Explicitly allow scripts from our external CDNs and local scripts
       scriptSrc: ["'self'", 'https://cdn.jsdelivr.net'],
-      connectSrc: ["'self'", 'https://cdn.jsdelivr.net'],
+      connectSrc: [
+        "'self'",
+        'https://cdn.jsdelivr.net',
+        'https://static.cloudflareinsights.com',
+      ],
       // Add other directives if needed (e.g., style-src, font-src, etc.)
     },
   },
