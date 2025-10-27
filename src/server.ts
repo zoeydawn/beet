@@ -431,7 +431,7 @@ app.post('/logout', { preHandler: optionalVerifyJWT }, async (req, reply) => {
 
   app.log.info('User logged out.')
 
-  return reply.redirect('/login')
+  return reply.redirect('/')
 })
 
 app.post(
