@@ -258,6 +258,24 @@
   margin: 1rem auto;
 }
 
+.greeting {
+  align-items: center;
+  text-align: center;
+
+  p {
+    margin: 0;
+  }
+  a {
+    text-decoration: none;
+  }
+}
+
+.home-page-logo {
+  height: 180px;
+  width: 180px;
+  margin: 3rem 0 1rem;
+}
+
 .login-container {
   color: var(--pico-primary-inverse);
   margin: 0 auto;
