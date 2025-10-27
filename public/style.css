@@ -261,18 +261,13 @@
 .greeting {
   align-items: center;
   text-align: center;
+  padding-bottom: 1.5rem;
 
   p {
     margin: 0;
   }
   a {
     text-decoration: none;
-  }
-}
-
-#home-page-chat {
-  #ask-form {
-    padding: 2rem 0 0;
   }
 }
 
