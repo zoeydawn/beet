@@ -431,7 +431,7 @@ app.post('/logout', { preHandler: optionalVerifyJWT }, async (req, reply) => {
 
   app.log.info('User logged out.')
 
-  return reply.redirect('/')
+  return reply.redirect('/logged-out')
 })
 
 app.post(
@@ -822,6 +822,10 @@ app.get('/login-form', (_req, reply) => {
 
 app.get('/create-account-form', (_req, reply) => {
   reply.view('partials/create-account-form.hbs')
+})
+
+app.get('/logged-out', (_req, reply) => {
+  reply.view('logged-out.hbs', { title: 'Successfully logged out - Beet' })
 })
 
 app.get('/chat/:id', { preHandler: optionalVerifyJWT }, async (req, reply) => {

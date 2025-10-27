@@ -247,6 +247,10 @@
   margin: 1rem 0;
 }
 
+.back-link {
+  margin: 1rem 0 0 2rem;
+}
+
 .centered {
   display: flex;
   justify-content: center;
