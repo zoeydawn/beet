@@ -107,12 +107,12 @@ app.register(helmet, {
       // Default sources: only allow scripts from the application's origin
       defaultSrc: ["'self'"],
       // Explicitly allow scripts from our external CDNs and local scripts
-      scriptSrc: ["'self'", 'https://cdn.jsdelivr.net'],
-      connectSrc: [
+      scriptSrc: [
         "'self'",
         'https://cdn.jsdelivr.net',
         'https://static.cloudflareinsights.com',
       ],
+      connectSrc: ["'self'", 'https://cdn.jsdelivr.net'],
       // Add other directives if needed (e.g., style-src, font-src, etc.)
     },
   },
