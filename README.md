@@ -6,6 +6,8 @@
 
 **Beet** is a fast and friendly AI Chat. It utilizes open-source LLMs via the **Hugging Face** inference API. It's built with **Node**, **Fastify**, **HTMX**, **Redis**, and **Handlebars**. 
 
+---
+
 ### Install and run from source:
 
 Clone the repository:
@@ -44,6 +46,8 @@ npm run dev
 ```
 
 Navigate to [localhost:3000](http://localhost:3000/)
+
+---
 
 ### What makes Beet lightweight and fast? 
 - Minimal front-end: Beet utilizes **HTMX** to load the bare minimum of HTML content. It only loads what you need at the moment, so the pages and views load quickly. It also includes small CSS and JavaScript files consisting of only what is needed in the browser. The heavy lifting is all done server side.
