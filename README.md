@@ -40,6 +40,8 @@ HUGGING_FACE_API_KEY=<Your HF API key>
 SESSION_SECRET="a long random string"
 ```
 
+Also, make sure to set `NODE_ENV="production"` in any production deploy.
+
 Run the development server:
 ```
 npm run dev
@@ -64,7 +66,9 @@ A couple of reasons:
 
 ### Why I built it:
 It started when I was playing around with open-source LLMs (I happen to really like open-source things). I was running small LLMs on my machine with **Ollama**. One day, as is typical of me, I said "hey, I could build a front-end for this!" That's how Beet got started. 
+
 I realized it was much more practical to use inference API providers than it was to run my own models with Ollama, so I switched to Hugging Face. I like the Hugging Face inference API because it gives me access to many inference providers, and therefore many open-source models. 
+
 I chose models that are useful and fast. My published demo only provides a few small models because I don't want to make larger models available to the world at my expense. The more powerful models are "premium" and can only be accessed by "premium accounts". Want a premium account? Contact me, and tell me what username you used to sign up, and I can set your account to premium. 
 
 
