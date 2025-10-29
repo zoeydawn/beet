@@ -69,7 +69,7 @@ It started when I was playing around with open-source LLMs (I happen to really l
 
 I realized it was much more practical to use inference API providers than it was to run my own models with Ollama, so I switched to Hugging Face. I like the Hugging Face inference API because it gives me access to many inference providers, and therefore many open-source models. 
 
-I chose models that are useful and fast. My published demo only provides a few small models because I don't want to make larger models available to the world at my expense. The more powerful models are "premium" and can only be accessed by "premium accounts". Want a premium account? Contact me, and tell me what username you used to sign up, and I can set your account to premium. 
+I chose models that are useful and fast. My published demo only provides a few small models because I don't want to make larger models available to the world at my expense. The more powerful models are "premium" and can only be accessed by "premium accounts". Want a premium account? Contact me, tell me what username you used to sign up, and if you are a recruiter or someone I know personally, I will set your account to premium. For most people, I recommend cloning the repo and running it with your own API keys. 
 
 
 ### Contributions are welcome!
