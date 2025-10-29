@@ -454,7 +454,7 @@ app.post(
     // PREVENT PREMIUM MODEL UPGRADE FOR NON-PREMIUM USERS
     const selectedModel = models[model]
 
-    if (selectedModel.isPremium && !isPremiumUser) {
+    if (!selectedModel || (selectedModel.isPremium && !isPremiumUser)) {
       model = defaultModel
     }
 
@@ -587,7 +587,8 @@ app.post(
       const isPremiumUser = getIsPremiumUser(req)
       const selectedModel = models[model]
 
-      if (selectedModel.isPremium && !isPremiumUser) {
+      if (!selectedModel || (selectedModel.isPremium && !isPremiumUser)) {
+        // if selected model is undifined for whatever reason, set to default model
         // If a non-premium user somehow selected a premium model, we must prevent it.
         // We will ignore the selected model and force the chat to continue with default model.
         model = defaultModel

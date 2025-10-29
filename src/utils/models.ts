@@ -49,7 +49,7 @@ export const models: ModelsObject = {
   },
   'qwen3-235b': {
     value: 'qwen3-235b',
-    hfValue: 'Qwen/Qwen3-235B-A22B-Instruct-2507',
+    hfValue: 'Qwen/Qwen3-235B-A22B-Instruct-2507:fireworks-ai',
     label: 'Qwen3 235B',
     isPremium: true,
     maxTokens: 20000,
