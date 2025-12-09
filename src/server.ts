@@ -479,7 +479,7 @@ You must respond with only the title and no other text, punctuation, or markdown
             },
             method: 'POST',
             body: JSON.stringify({
-              model: 'meta-llama/Llama-3.1-8B-Instruct:fireworks-ai',
+              model: 'meta-llama/Llama-3.1-8B-Instruct',
               messages: [
                 {
                   role: 'system',
