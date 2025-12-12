@@ -12,7 +12,7 @@ export type ModelsObject = {
 
 export const defaultModel = 'gpt-oss-20b'
 
-export const defaultPremiumModel = 'qwen3-235b'
+export const defaultPremiumModel = 'gpt-oss-120b'
 
 export const models: ModelsObject = {
   'gpt-oss-20b': {
@@ -38,6 +38,14 @@ export const models: ModelsObject = {
     isPremium: false,
     maxTokens: 20000,
     // contextLength: 256k
+  },
+  'apertus-70b': {
+    value: 'apertus-70b',
+    hfValue: 'swiss-ai/Apertus-70B-Instruct-2509:publicai',
+    label: 'Swiss AI Apertus 70B',
+    isPremium: false,
+    maxTokens: 6000,
+    // contextLength: 65k
   },
   'gpt-oss-120b': {
     value: 'gpt-oss-120b',
